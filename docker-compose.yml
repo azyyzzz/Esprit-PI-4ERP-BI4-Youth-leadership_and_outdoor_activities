@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # ── FastAPI ML Model API ──────────────────────────────────────────────
+  fastapi_model:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Flask Web Application Dashboard ──────────────────────────────────
+  flask_webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile.webapp
+    ports:
+      - "5000:5000"
+    environment:
+      - API_URL=http://fastapi_model:8005
+      - MLOPS_API_URL=http://fastapi_model:8005
+    depends_on:
+      - fastapi_model
+
+  # ── Prometheus for Monitoring ─────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring:/etc/prometheus
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ── Grafana for Visualization ────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      # Required so the DSS app (another origin: port 8765) can iframe Grafana on :3000
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      # Use localhost for local development to avoid CSRF mismatch
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_SECURITY_COOKIE_SAMESITE=none
+      - GF_SECURITY_COOKIE_SECURE=false
+      # Anonymous access allows viewing the dashboard without logging in
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_NAME=Main Org.
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      # Try to skip the mandatory password change on first login
+      - GF_SECURITY_DISABLE_INITIAL_PASSWORD_CHANGE=true
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

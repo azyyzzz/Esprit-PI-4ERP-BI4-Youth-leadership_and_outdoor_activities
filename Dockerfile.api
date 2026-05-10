@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --default-timeout=1000 --no-cache-dir -r requirements.txt
+
+# Copy model code
+COPY mlops_api.py drift_detector.py alerting.py observability.py ./
+COPY models/ models/
+COPY mlruns/ mlruns/
+
+# Expose FastAPI port
+EXPOSE 8005
+
+CMD ["uvicorn", "mlops_api:app", "--host", "0.0.0.0", "--port", "8005"]

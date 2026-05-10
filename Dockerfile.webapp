@@ -1,0 +1,23 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System dependencies for ODBC (SQL Server connection)
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    unixodbc \
+    unixodbc-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --default-timeout=1000 --no-cache-dir -r requirements.txt
+
+# Copy everything
+COPY . .
+
+EXPOSE 5000
+ENV FLASK_APP=ml_app/app.py
+ENV FLASK_RUN_PORT=5000
+
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]

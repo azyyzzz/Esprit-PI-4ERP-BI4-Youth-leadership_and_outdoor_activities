@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1778003739410
+current_stage: None
+description: null
+last_updated_timestamp: 1778003739410
+name: AtRiskClassifier
+run_id: a2c20d99b6d442fab867bbe958a32539
+run_link: null
+source: file:///C:/Users/MSI/Desktop/wetransfer_scouts_2026-02-28_1339/Scouts/mlruns/741762050468076685/a2c20d99b6d442fab867bbe958a32539/artifacts/random_forest_at_risk_model
+status: READY
+status_message: null
+storage_location: file:///C:/Users/MSI/Desktop/wetransfer_scouts_2026-02-28_1339/Scouts/mlruns/741762050468076685/a2c20d99b6d442fab867bbe958a32539/artifacts/random_forest_at_risk_model
+user_id: null
+version: 3

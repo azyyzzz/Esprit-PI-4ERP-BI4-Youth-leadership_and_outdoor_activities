@@ -1,0 +1,25 @@
+### dim_membre
+membre_id	membre_code	membre_rank	training_level	last_name	first_name	unit_fk	membre_position
+1	900002913	قائد الوحدة	الشارة الخشبية	هيثم	بن عايشة	3	المشاركون
+2	900009452	مलाزم قائد الوحدة	بدون تدريب	امنة	عربي	3	إطار الوحدة
+...
+
+### Fact_activite
+date_FK	unit_FK	type_FK	nb_activites	Nb_Participants	Top3_Column
+50083	1	28	5	50	Top 3
+...
+
+### dim_unite
+unit_id	unite_name	unit_code	age_category
+1	العصافير	ASFR	4-7 ans
+...
+
+### Fact_Sponsors
+Location_FK	Date_FK	Unit_FK	Sponsor_FK	promised_amount_TND	Received_amount_TND	مستوى التمويل
+29	48646	5	1	7898	3217	مرتفع
+...
+
+### Fact_Weather_Events
+Date_FK	Location_FK	temp_max_mean	Total_Rainfall	Max_win_speed	weather_score	Latitude	Longitude	Wind Level
+34592	54	16,00909090909091	45,7	22,9	70	50,7010061	-114,8537453	مرتفع
+...

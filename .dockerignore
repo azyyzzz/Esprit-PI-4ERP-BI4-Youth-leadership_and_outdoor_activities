@@ -1,0 +1,14 @@
+.git
+.gitignore
+.dockerignore
+mlruns.db
+airflow_orchestration/
+SCOUT.pbix
+PowerBIPerformanceData.json
+__pycache__/
+*.pyc
+venv/
+env/
+.env
+.idea/
+.vscode/

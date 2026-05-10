@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/MSI/Desktop/wetransfer_scouts_2026-02-28_1339/Scouts/ml_app/mlruns/0/f185a93a42e24f858543d0abf57fd1ad/artifacts
+end_time: 1778349710012
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f185a93a42e24f858543d0abf57fd1ad
+run_name: Scouts_Intelligence_Train
+run_uuid: f185a93a42e24f858543d0abf57fd1ad
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778349706421
+status: 3
+tags: []
+user_id: MSI

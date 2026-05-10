@@ -1,0 +1,300 @@
+﻿               
+     
+     
+     
+ 
+DETAILED FUNCTIONAL    SPECIFICATION
+     
+TABLE OF CONTENTS 
+1. GENERAL PRESENTATION .................................. 21.1 DOCUMENT CONTENT ........................................ 21.2 CONTEXT AND OBJECTIVES ............................. 2
+2. DEFINITION OF ANALYSIS AXES AND INDICATORS ................ 22.1 FUNCTIONAL SCOPE OF THE PROJECT ................................ 22.2 DESCRIPTION OF ANALYSIS AXES (DIMENSIONS) ................. 3
+2.2.1 Period .......................................................................... 42.2.2 Scout Unit ................................................................... 52.2.3 Activity Type .............................................................. 52.2.4 Camp Type ................................................................. 62.2.5 Location ...................................................................... 62.2.6 Responsible ..................................................................72.2.7 Member ....................................................................... 72.2.8 Participation ............................................................... 8
+2.3 DESCRIPTION OF KEY PERFORMANCE INDICATORS (KPIs) .... 8
+2.3.1 Total Number of Members .................................................. 82.3.2 Member Growth Rate ......................................................... 92.3.3 Number of Activities Organized ......................................... 92.3.4 Participation Rate .............................................................. 102.3.5 Number of Camps Organized ............................................. 102.3.6 Total Budget Committed .................................................... 112.3.7 Budget Consumption Rate ................................................. 112.3.8 Average Cost per Member ................................................ 122.3.9 Average Cost per Camp ..................................................... 122.3.10 Member Retention Rate .................................................. 132.3.11 Number of At-Risk Units .................................................. 13
+3. THEME 1: MEMBER AND ACTIVITIY MONITORING AND ANALYSIS ........... 93.1 THEME PRESENTATION ................................................................ 93.2 ANALYSIS AXES FOR THE THEME ............................................. 103.3 KPI/ANALYSIS AXES MATRIX .......................................................11
+4. THEME 2: CAMP AND BUDGET MONITORING AND ANALYSIS ................... 164.1 THEME PRESENTATION ......................................... 164.2 ANALYSIS AXES ......................................................... 174.3 KPI/ANALYSIS AXES MATRIX ............................... 17
+5. PREDICTIVE ANALYTICS AND ARTIFICIAL INTELLIGENCE .... 185.1 OBJECTIVES OF PREDICTIVE ANALYSIS ....................... 185.2 IDENTIFICATION OF AT-RISK UNITS ............................ 19
+6. DECISION-MAKERS AND BI SYSTEM USERS .................... 20
+7. CONCLUSION AND FUTURE PERSPECTIVES ..................... 20
+1. GENERAL PRESENTATION
+1.1 Document Content
+This document constitutes the Detailed Functional Specification (DFS). It describes all functional requirements, decision-making indicators, analysis axes, decision-makers, as well as the technical and decision-making architecture of the BI system, in alignment with the selected constellation model.
+1.2 Context and Objectives
+Each season, the scout group manages a large volume of data related to members, scout units, activities, camps, and budgets. These data are currently used in an administrative manner.
+The objective of this project is to transform these data into decision-oriented information in order to improve governance, strategic planning, and decision-making.
+2. DEFINITION OF ANALYSIS AXES AND INDICATORS
+2.1. FUNCTIONAL SCOPE OF THE PROJECT
+- Monitoring and analysis of members
+- Analysis of scout units
+- Activity analysis
+- Camp analysis
+- Budget monitoring and analysis
+- Temporal analysis by season
+- Predictive and intelligent analysis
+2.2. DESCRIPTION OF ANALYSIS AXES
+The analysis axes are:
+Time(Period)
+Scout unit
+Activity type
+Sponsor
+Location
+Season
+Member
+2.2.1. Period
+2.2.2. Scout unit
+2.2.3. Activity type
+2.2.4. Sponsor
+Axis name
+Sponsor
+Definition
+Entity providing financial or material support to scout units, activities, and camps
+Date of creation
+Latest update
+Levels
+Number of positions
+Level 0: Total
+1 element
+Level 1: Sponsor type
+4 elements
+Level 2: Sector
+Multiple elements
+Level 3: Sponsorship theme
+Multiple elements
+Level 0
+Level 1
+Level 2
+Level 3
+Total
+Company
+Social
+Food for camps
+Company
+Culture
+Educational material
+Company
+Sport
+Transport for outings
+International organization
+Environment
+Community project
+NGO / Association
+Health
+Safety and prevention
+Individual sponsor
+Education
+Training support
+2.2.5. Location
+2.2.6. Season
+Axis name
+Season
+Definition
+Time period corresponding to a scouting season, generally spanning two consecutive calendar years
+Date of creation
+Latest update
+Levels
+Number of positions
+Level 0: Total
+1 element
+Level 1: Season
+Multiple elements
+Level 0
+Level 1
+Total
+2019û2020
+2020û2021
+2021û2022
+2022û2023
+2023û2024
+2024û2025
+2.2.7. Member
+Axis name
+Member
+Definition
+Individual belonging to a scout unit, including regular members and unit leaders (SUP)
+Date of creation
+Latest update
+Levels
+Number of positions
+Level 0: Total
+1 element
+Level 1: Member role
+E elemenets 
+Level0
+Level1
+ Total
+Member
+Unit Leader
+2.3. Description of Key Performance Indicators (KPIs)
+2.3.1. Total number of members
+Definition: Total number of registered members during a given period.
+Nature: Stock
+Type: Loaded
+Axes: Period, Season, Scout Unit, Member
+2.3.2. Member growth rate
+Definition: Variation in the number of members between two seasons.
+Nature: Calculated
+Type: Ratio
+Axes: Season, Scout Unit
+2.3.3. Number of activities
+Definition: Total number of organized activities.
+Nature: Flow
+Type: Loaded
+Axes: Period, Season, Scout Unit, Activity Type
+2.3.4. Participation rate
+Definition: Ratio between the number of participants and the total membership.
+Nature: Calculated
+Type: Ratio
+Axes: Period, Season, Scout Unit, Activity Type, Member
+2.3.5. Number of camps
+Definition: Total number of organized camps.
+Nature: Flow
+Type: Loaded
+Axes: Period, Season, Scout Unit, Location
+2.3.6. Total budget committed
+Definition: Total amount of incurred expenses.
+Nature: Flow
+Type: Loaded
+Axes: Period, Season, Scout Unit, Activity Type, Sponsor
+2.3.7. Budget consumption rate
+Definition: Ratio between the consumed budget and the planned budget.
+Nature: Calculated
+Type: Ratio
+Axes: Period, Season, Scout Unit
+2.3.8. Average cost per member
+Definition: Total budget divided by the number of participants.
+Nature: Calculated
+Type: Ratio
+Axes: Period, Season, Scout Unit, Member
+2.3.9. Average cost per camp
+Definition: Total camp cost divided by the number of participants.
+Nature: Calculated
+Type: Ratio
+Axes: Period, Season, Location
+2.3.10. Retention rate
+Definition: Percentage of members present across two consecutive seasons.
+Nature: Calculated
+Type: Ratio
+Axes: Season, Scout Unit, Member
+2.3.11. Number of at-risk units
+Definition: Units showing a decrease in membership or participation.
+Nature: Calculated
+Type: Alert Indicator
+Axes: Season, Scout Unit
+3. THEME 1: MEMBER AND ACTIVITY MONITORING AND ANALYSIS
+3.1 Presentation
+The objective of this theme is to monitor and analyze members and activities of the Scout Group in order to evaluate participation, engagement, and overall performance.
+This theme focuses on tracking membership evolution and activity organization, providing decision-makers with insights into how members interact with the activities offered.
+The indicators analyzed in this theme are:
+Total number of members
+Member growth rate
+Member retention rate
+Number of activities organized
+Participation rate in activities
+Number of at-risk units.
+ Analysis Axes
+The indicators of this theme are analyzed according to the following axes:
+Period
+Season
+Scout Unit
+Activity Type
+Member
+ KPI / Analysis axes matrix:
+4. THEME 2: CAMP AND BUDGET MONITORING AND ANALYSIS
+4.1 Presentation
+The objective of this theme is to monitor and analyze camps and budget performance of the Scout Group.
+This theme aims to evaluate camp organization, cost efficiency, and financial management in order to optimize resource allocation and support strategic planning.
+The indicators analyzed in this theme are:
+Number of camps organized
+Average cost per camp
+Total budget committed
+Budget consumption rate
+Average cost per member.
+4.2 Analysis Axes
+The indicators of this theme are analyzed according to the following axes:
+Period
+Season
+Scout Unit
+Activity Type
+Member
+4.3 KPI / Analysis axes matrix
+5. PREDICTIVE ANALYTICS AND ARTIFICIAL INTELLIGENCE
+This section presents the Machine Learning and Artificial Intelligence objectives defined by the client and integrated into the BI solution in order to enhance decision support.
+5.1 Objectives of Predictive Analytics (Machine Learning)
+The objective of the predictive analytics component is to exploit historical data to anticipate future trends and support proactive decision-making.
+The main Machine Learning objectives are:
+Membership Forecasting and Organizational Planning
+The system will predict the future number of members per scout unit and per period in order to anticipate organizational needs, including staffing requirements, activity planning, and logistical preparation. This forecasting capability will support proactive management and long-term planning.
+Budget Estimation and Financial Planning
+Based on historical activity volumes, participation levels, and cost patterns, the system will estimate the required budgets for upcoming activities and camps. This objective aims to improve financial planning accuracy and optimize resource allocation.
+Participation Rate Prediction
+Participation rates in activities and camps will be predicted using historical attendance data and participation trends. These predictions will enable better planning, improve engagement strategies, and reduce uncertainty in activity organization.
+Unit Performance Classification
+Scout units will be classified according to their overall performance level (low, medium, or high) based on key indicators such as participation, growth, activity frequency, and retention. This classification will facilitate comparative analysis and targeted decision-making.
+Identification of At-Risk Units
+The system will identify scout units at risk of membership decline or disengagement by analyzing trends in participation, retention rates, and engagement indicators. This objective supports early intervention and preventive management actions.
+Behavioral Segmentation of Scout Units
+Scout units will be segmented according to their behavioral patterns and organizational dynamics. This segmentation will help decision-makers understand different unit profiles and adapt management strategies accordingly.
+Weather-Aware Predictive Modeling
+A weather-aware predictive model will be developed by combining historical weather data, geographical localization information, and activity and camp KPIs. The model will anticipate adverse climatic conditions such as storms, extreme temperatures, and heavy rainfall, and evaluate their potential impact on planned activities and camps.
+Intelligent Activity Adaptation and Rescheduling
+Based on weather forecasts and historical performance data, an intelligent activity adaptation model will recommend alternative activities, activity rescheduling, or relocation when unfavorable weather conditions are predicted for a specific location. This approach aims to minimize operational disruptions and ensure activity continuity.
+Early Warning and Proactive Alert System
+An early warning system will continuously monitor KPIs and predictive indicators to proactively notify decision-makers and unit leaders of potential operational risks related to weather, location, or participation levels. Alerts will be generated before critical thresholds are reached, enabling preventive rather than reactive actions.
+Financial Anomaly and Fraud Detection
+A dedicated anomaly detection model will be implemented to identify abnormal patterns in budget consumption, participation rates, or camp costs. These anomalies may indicate financial irregularities, data inconsistencies, or inefficient resource usage, thereby supporting financial transparency and risk mitigation.
+Predictive Member Engagement Scoring
+Member-level analytics will be enhanced through the introduction of a predictive engagement score calculated based on participation history, attendance patterns, and activity involvement. This score will enable early identification of disengagement risks and support targeted intervention strategies by unit leaders.
+5.2 Advanced Artificial Intelligence Objectives
+Beyond predictive analysis, the project aims to integrate advanced Artificial Intelligence mechanisms to reinforce strategic decision-making.
+The main AI objectives are:
+Decision Support System
+The system will provide a simple decision support mechanism that presents analytical results, predictive indicators, and KPIs in a clear and structured way. This system will help decision-makers understand the situation and choose appropriate actions without relying on complex AI models.
+Automatic Recommendation Generation
+Basic automatic recommendations will be generated based on predefined rules and KPI thresholds. For example, the system may suggest priority actions or resource adjustments when certain indicators exceed or fall below defined limits.
+Weak Signal Detection
+The system will monitor gradual changes in KPIs to identify early warning signs of potential organizational or financial risks. This detection will rely on trend analysis and simple threshold-based logic rather than complex AI algorithms.
+Scenario Analysis Support
+The system will allow decision-makers to explore simple ôwhat-ifö scenarios by modifying key parameters such as budget levels, number of activities, or expected participation. The impact of these changes will be evaluated using historical averages and predictive outputs.
+Recommendation and Alert System
+A lightweight recommendation and alert system will be implemented to notify decision-makers when predefined risk conditions are detected. Alerts and suggestions will be generated based on predictive results, weather conditions, and location data, using clear and understandable rules.
+Conversational Chatbot 
+A basic conversational chatbot will be developed to answer frequently asked questions related to activities, camps, participation, and alerts. The chatbot will rely on predefined responses and simple personalization based on user roles rather than advanced natural language understanding.
+Proactive Risk Monitoring
+The system will continuously track key KPIs and predictive indicators to identify potential risks related to participation, budget, or environmental conditions. When abnormal patterns are detected, the system will trigger alerts to support early intervention.
+6. DECISION-MAKERS AND BI SYSTEM USERS
+The Business Intelligence system is designed to support decision-making for two main categories of users: operational decision-makers within the Scout Group and the project stakeholders responsible for analysis and supervision.
+6.1 Operational Decision-Makers (Client Side)
+These users represent the primary decision-makers within the Scout Group and are directly involved in managing units, activities, and camps.
+Users:
+Scout Leaders
+Main decision objectives:
+Monitor the evolution of members within their unit
+Analyze participation in activities and camps
+Track the number of activities organized per period
+Evaluate camp organization and participation levels
+Identify potential issues related to engagement or retention
+Key KPIs consulted:
+Total number of members
+Member growth rate
+Retention rate
+Number of activities organized
+Participation rate (camps)
+Members by age group
+Gender distribution rate
+6.2 Project and Supervision Users
+These users are responsible for designing, analyzing, and supervising the BI solution.
+Users:
+Project Team (our group)
+Academic Supervisors / Encadrants
+Main decision objectives:
+Analyze global performance across units and periods
+Validate data quality and model consistency
+Evaluate KPI relevance and analytical results
+Exploit predictive analytics outputs
+Supervise and assess the BI project outcomes
+Key KPIs consulted:
+All defined KPIs
+Predictive indicators (membership evolution, at-risk units, future trends)
+7. CONCLUSION AND FUTURE PERSPECTIVES
+This BI project transforms operational data into actionable decision-making information.
+Future perspectives include extending predictive models, integrating new data sources, and enhancing analytical dashboards.

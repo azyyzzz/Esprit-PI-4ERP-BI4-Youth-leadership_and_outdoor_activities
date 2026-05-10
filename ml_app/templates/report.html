@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<!-- scout-dss-report-ui-v4 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <title>Scout DSS — Academic report &amp; dashboard assistant</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f0e6;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 24px;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    .header {
+      background: #1e4d2b;
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .header p {
+      margin: 6px 0 0;
+      font-size: 14px;
+      opacity: 0.95;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #d9cba4;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      padding: 14px 16px;
+    }
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .title-row h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #1e4d2b;
+    }
+    .badge {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 14px;
+      color: #fff;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .covered { background: #2d6a3f; }
+    .partial { background: #b5860d; }
+    .todo { background: #c0392b; }
+    ul {
+      margin: 10px 0 8px 20px;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 6px;
+    }
+    .notes {
+      font-size: 13px;
+      color: #444;
+      background: #faf7f0;
+      border-left: 4px solid #b5860d;
+      padding: 10px 12px;
+      border-radius: 6px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .chart-box {
+      background: #fff;
+      border: 1px solid #d9cba4;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .chart-box h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: #1e4d2b;
+    }
+    canvas {
+      max-height: 320px;
+    }
+    .chat-wrap {
+      background: #fff;
+      border: 1px solid #d9cba4;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+    #chatLog {
+      height: 180px;
+      overflow-y: auto;
+      background: #faf7f0;
+      border: 1px solid #e1d4b1;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .msg {
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .user {
+      color: #1e4d2b;
+      font-weight: bold;
+    }
+    .bot {
+      color: #444;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+    input[type=text] {
+      flex: 1;
+      border: 1px solid #b8a77b;
+      border-radius: 8px;
+      padding: 9px 10px;
+      font-size: 14px;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      background: #1e4d2b;
+      color: #fff;
+      padding: 9px 14px;
+      cursor: pointer;
+    }
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>Machine Learning Academic Validation Report</h1>
+      <p>Integrated Project checklist aligned to your teacher's required criteria.</p>
+    </div>
+
+    {% for section in sections %}
+    <div class="card">
+      <div class="title-row">
+        <h2>{{ section.title }}</h2>
+        {% set cls = 'covered' if section.status == 'Covered' else ('partial' if section.status == 'Partially Covered' else 'todo') %}
+        <span class="badge {{ cls }}">{{ section.status }}</span>
+      </div>
+      <ul>
+        {% for item in section["items"] %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+      <div class="notes">{{ section.notes }}</div>
+    </div>
+    {% endfor %}
+
+    <!-- OBJECTIVE 1 TO 4 -->
+    <div class="grid">
+      <div class="chart-box">
+        <h3>Objective 1: Membership Forecasting (ARIMA vs Lag)</h3>
+        <canvas id="tsChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Objective 2: Participation Prediction (RF vs Ridge)</h3>
+        <canvas id="regChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="chart-box">
+        <h3>Objective 3: Budget Estimation (RF vs Linear)</h3>
+        <canvas id="obj3Chart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Objective 4: Anomaly Detection (IsoForest vs LOF)</h3>
+        <canvas id="obj4Chart"></canvas>
+      </div>
+    </div>
+
+    <!-- OBJECTIVE 5 TO 8 -->
+    <div class="grid">
+      <div class="chart-box">
+        <h3>Objective 5: Unit Performance (RF vs LogReg)</h3>
+        <canvas id="clsChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Objective 6: At-Risk Units (LogReg vs DecTree)</h3>
+        <canvas id="obj6Chart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="chart-box">
+        <h3>Objective 7: Behavioral Segmentation (KMeans vs Agglo)</h3>
+        <canvas id="clusterChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Objective 8: Engagement Scoring (Ridge vs SVR)</h3>
+        <canvas id="obj8Chart"></canvas>
+      </div>
+    </div>
+
+    <hr style="border:1px solid #d9cba4;margin:20px 0">
+    <h2 style="color:#1e4d2b;text-align:center">Academic Diagnostics (Grid A-F)</h2>
+
+    <div class="grid">
+      <div class="chart-box">
+        <h3>Regression: Actual vs Predicted</h3>
+        <canvas id="regScatterChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Regression: Residual Distribution</h3>
+        <canvas id="regResidChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="chart-box">
+        <h3>Clustering: Cluster Profiles</h3>
+        <canvas id="clusterProfileChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>PCA 2D Cluster Projection</h3>
+        <canvas id="pcaChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="chart-box">
+        <h3>Objective 5: LogReg Confusion Matrix</h3>
+        <canvas id="cmLogReg"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Objective 5: Random Forest Confusion Matrix</h3>
+        <canvas id="cmRF"></canvas>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="chart-box">
+        <h3>Classification Feature Importance</h3>
+        <canvas id="featClsChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Regression Feature Importance</h3>
+        <canvas id="featRegChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-box" style="max-width:400px;margin:10px auto">
+        <h3>K-Means Elbow Method</h3>
+        <canvas id="elbowChart"></canvas>
+    </div>
+
+    <div class="chat-wrap">
+      <h3 id="chatbotTitle" style="margin-top:0;color:#1e4d2b">Scout Group DSS — Dashboard assistant</h3>
+      <p id="chatbotSubtitle" style="font-size:13px;color:#555;margin-top:0">Loading…</p>
+      <div id="chatLog"></div>
+      <div class="row">
+        <input id="chatInput" type="text" placeholder="">
+        <button onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    let charts = [];
+
+    function makeChart(id, type, data, options = {}) {
+      const ctx = document.getElementById(id);
+      if (!ctx) return;
+      const c = new Chart(ctx, { type, data, options });
+      charts.push(c);
+    }
+
+    async function loadReportData() {
+      const res = await fetch('/api/academic_report');
+      const d = await res.json();
+
+      const safeMap = (arr, fn) => (arr && arr.map) ? arr.map(fn) : [];
+
+      try {
+          const clsLabels = safeMap(d.classification.models, m => m.model);
+          makeChart('clsChart', 'bar', {
+            labels: clsLabels,
+            datasets: [
+              { label: 'Accuracy', data: safeMap(d.classification.models, m => m.accuracy), backgroundColor: '#1e4d2b' },
+              { label: 'F1', data: safeMap(d.classification.models, m => m.f1), backgroundColor: '#b5860d' },
+              { label: 'ROC-AUC', data: safeMap(d.classification.models, m => m.roc_auc), backgroundColor: '#2d6a3f' }
+            ]
+          }, { responsive: true, scales: { y: { beginAtZero: true, max: 1 } } });
+      } catch(e) { console.error("clsChart failed", e); }
+
+      try {
+          makeChart('regChart', 'bar', {
+            labels: safeMap(d.regression.models, m => m.model),
+            datasets: [
+              { label: 'RMSE', data: safeMap(d.regression.models, m => m.rmse), backgroundColor: '#1e4d2b' },
+              { label: 'MAE', data: safeMap(d.regression.models, m => m.mae), backgroundColor: '#b5860d' }
+            ]
+          }, { responsive: true, scales: { y: { beginAtZero: true } } });
+      } catch(e) { console.error("regChart failed", e); }
+
+      try {
+          makeChart('clusterChart', 'bar', {
+            labels: ['KMeans', 'Agglomerative'],
+            datasets: [
+              { label: 'Silhouette', data: [d.clustering.metrics.KMeans.silhouette, d.clustering.metrics.Agglomerative.silhouette], backgroundColor: '#2d6a3f' },
+              { label: 'Davies-Bouldin', data: [d.clustering.metrics.KMeans.davies_bouldin, d.clustering.metrics.Agglomerative.davies_bouldin], backgroundColor: '#c0392b' }
+            ]
+          }, { responsive: true, scales: { y: { beginAtZero: true } } });
+      } catch(e) { console.error("clusterChart failed", e); }
+
+      try {
+          makeChart('tsChart', 'bar', {
+            labels: safeMap(d.timeseries.models, m => m.model),
+            datasets: [
+              { label: 'RMSE', data: safeMap(d.timeseries.models, m => m.rmse), backgroundColor: '#1e4d2b' },
+              { label: 'MAE', data: safeMap(d.timeseries.models, m => m.mae), backgroundColor: '#b5860d' },
+              { label: 'MAPE', data: safeMap(d.timeseries.models, m => m.mape), backgroundColor: '#2d6a3f' }
+            ]
+          }, { responsive: true, scales: { y: { beginAtZero: true } } });
+      } catch(e) { console.error("tsChart failed", e); }
+
+      // Obj 3, 4, 6, 8
+      try {
+          makeChart('obj3Chart', 'bar', {
+              labels: safeMap(d.obj3, m => m.model),
+              datasets: [{ label: 'RMSE (Budget)', data: safeMap(d.obj3, m => m.rmse), backgroundColor: '#1e4d2b' }]
+          });
+      } catch(e) { console.error("obj3Chart failed", e); }
+
+      try {
+          makeChart('obj4Chart', 'bar', {
+              labels: safeMap(d.obj4, m => m.model),
+              datasets: [{ label: 'Score / Detection %', data: safeMap(d.obj4, m => m.score), backgroundColor: '#c0392b' }]
+          });
+      } catch(e) { console.error("obj4Chart failed", e); }
+
+      try {
+          makeChart('obj6Chart', 'bar', {
+              labels: safeMap(d.obj6, m => m.model),
+              datasets: [{ label: 'F1 Score (Risk)', data: safeMap(d.obj6, m => m.f1), backgroundColor: '#2d6a3f' }]
+          });
+      } catch(e) { console.error("obj6Chart failed", e); }
+
+      try {
+          makeChart('obj8Chart', 'bar', {
+              labels: safeMap(d.obj8, m => m.model),
+              datasets: [{ label: 'RMSE (Engagement)', data: safeMap(d.obj8, m => m.rmse), backgroundColor: '#b5860d' }]
+          });
+      } catch(e) { console.error("obj8Chart failed", e); }
+
+      // Regression Scatter & Residuals
+      try {
+          const bestReg = (d.regression.scatter && d.regression.best_model) ? (d.regression.scatter[d.regression.best_model] || { actual: [], predicted: [] }) : { actual: [], predicted: [] };
+          makeChart('regScatterChart', 'scatter', {
+              datasets: [{ label: 'Actual vs Predicted', data: safeMap(bestReg.actual, (a, i) => ({ x: a, y: bestReg.predicted[i] })), backgroundColor: '#b5860d' }]
+          }, { scales: { x: { title: { display: true, text: 'Actual' } }, y: { title: { display: true, text: 'Predicted' } } } });
+      } catch(e) { console.error("regScatterChart failed", e); }
+
+      try {
+          const bestResid = (d.regression.residuals && d.regression.best_model) ? (d.regression.residuals[d.regression.best_model] || { predicted: [], residual: [] }) : { predicted: [], residual: [] };
+          makeChart('regResidChart', 'scatter', {
+              datasets: [{ label: 'Residuals', data: safeMap(bestResid.predicted, (p, i) => ({ x: p, y: bestResid.residual[i] })), backgroundColor: '#c0392b' }]
+          }, { scales: { x: { title: { display: true, text: 'Predicted' } }, y: { title: { display: true, text: 'Residual' } } } });
+      } catch(e) { console.error("regResidChart failed", e); }
+
+      // Cluster Profiles
+      try {
+          makeChart('clusterProfileChart', 'bar', {
+              labels: safeMap(d.clustering.profiles, p => 'Cluster ' + p.cluster),
+              datasets: [
+                  { label: 'Avg Members', data: safeMap(d.clustering.profiles, p => p.avg_members), backgroundColor: '#1e4d2b' },
+                  { label: 'Avg Budget / 100', data: safeMap(d.clustering.profiles, p => p.avg_budget / 100), backgroundColor: '#b5860d' }
+              ]
+          });
+      } catch(e) { console.error("clusterProfileChart failed", e); }
+
+      // PCA Chart
+      try {
+          makeChart('pcaChart', 'scatter', {
+              datasets: [0, 1, 2].map(c => ({
+                  label: 'Cluster ' + c,
+                  data: safeMap(d.clustering.pca_points, p => p).filter(p => p.kmeans === c).map(p => ({ x: p.pc1, y: p.pc2 })),
+                  backgroundColor: ['#1e4d2b', '#b5860d', '#2d6a3f'][c]
+              }))
+          });
+      } catch(e) { console.error("pcaChart failed", e); }
+
+      try {
+          makeChart('elbowChart', 'line', {
+            labels: safeMap(d.clustering.elbow, e => e.k),
+            datasets: [{ label: 'Inertia', data: safeMap(d.clustering.elbow, e => e.inertia), borderColor: '#1e4d2b', tension: 0.2 }]
+          }, { responsive: true, scales: { y: { beginAtZero: false } } });
+      } catch(e) { console.error("elbowChart failed", e); }
+
+      try {
+          const rocSets = [];
+          if (d.classification.roc_curves) {
+              Object.entries(d.classification.roc_curves).forEach(([name, curve], i) => {
+                const colors = ['#1e4d2b', '#b5860d', '#2d6a3f', '#c0392b'];
+                rocSets.push({
+                  label: name,
+                  data: safeMap(curve.fpr, (x, idx) => ({ x: x, y: curve.tpr[idx] })),
+                  parsing: false, showLine: true, borderColor: colors[i % colors.length], pointRadius: 0
+                });
+              });
+              rocSets.push({
+                label: 'Random', data: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+                parsing: false, showLine: true, borderColor: '#888', borderDash: [5, 5], pointRadius: 0
+              });
+          }
+          makeChart('rocChart', 'scatter', { datasets: rocSets }, {
+            responsive: true,
+            scales: { x: { min: 0, max: 1, title: { display: true, text: 'FPR' } }, y: { min: 0, max: 1, title: { display: true, text: 'TPR' } } }
+          });
+      } catch(e) { console.error("rocChart failed", e); }
+
+      // Confusion Matrices
+      const labels_cm = ["Low", "Medium", "High"];
+      const createCMDataset = (matrix) => (matrix || []).flatMap((row, i) => (row || []).map((val, j) => ({ x: labels_cm[j], y: labels_cm[i], v: val })));
+      
+      const drawCM = (id, matrix) => {
+          try {
+              makeChart(id, 'bubble', {
+                  datasets: [{
+                      label: 'Value',
+                      data: createCMDataset(matrix).map(p => ({ x: p.x, y: p.y, r: Math.sqrt(p.v) * 5 })),
+                      backgroundColor: '#1e4d2b'
+                  }]
+              }, { 
+                  scales: { 
+                      x: { type: 'category', labels: labels_cm, title: { display: true, text: 'Predicted' } },
+                      y: { type: 'category', labels: labels_cm, title: { display: true, text: 'Actual' } }
+                  }
+              });
+          } catch(e) { console.error("drawCM failed for " + id, e); }
+      };
+      if (d.classification.confusion['Logistic Regression']) drawCM('cmLogReg', d.classification.confusion['Logistic Regression']);
+      if (d.classification.confusion['Random Forest']) drawCM('cmRF', d.classification.confusion['Random Forest']);
+
+      // Feature Importance
+      try {
+          const featCls = d.classification.feature_importance['Random Forest'] || [];
+          makeChart('featClsChart', 'bar', {
+              labels: safeMap(featCls, f => f.feature),
+              datasets: [{ label: 'Importance', data: safeMap(featCls, f => f.importance), backgroundColor: '#b5860d' }]
+          }, { indexAxis: 'y' });
+      } catch(e) { console.error("featClsChart failed", e); }
+
+      try {
+          const featReg = d.regression.feature_importance['Random Forest Regressor'] || [];
+          makeChart('featRegChart', 'bar', {
+              labels: safeMap(featReg, f => f.feature),
+              datasets: [{ label: 'Importance', data: safeMap(featReg, f => f.importance), backgroundColor: '#2d6a3f' }]
+          }, { indexAxis: 'y' });
+      } catch(e) { console.error("featRegChart failed", e); }
+    }
+
+    function appendMsg(role, txt) {
+      const log = document.getElementById('chatLog');
+      const div = document.createElement('div');
+      div.className = 'msg';
+      const label = document.createElement('span');
+      label.className = role;
+      label.textContent = (role === 'user' ? 'You' : 'Bot') + ': ';
+      const body = document.createElement('span');
+      body.className = 'bot';
+      body.textContent = txt;
+      div.appendChild(label);
+      div.appendChild(body);
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function initChatLabels() {
+      const titleEl = document.getElementById('chatbotTitle');
+      const subEl = document.getElementById('chatbotSubtitle');
+      const inp = document.getElementById('chatInput');
+      const fallback = {
+        title: 'Scout Group DSS — Dashboard assistant',
+        subtitle: 'Ask about the ML Intelligence Hub (port 5000): objectives 1–12, units, KPIs.',
+        opening: 'I answer questions about your Scout dashboard (not generic ML charts). Try: How many members in CHBL? List objectives. What is objective 1?',
+        placeholder: 'Example: How many members in CHBL? What is objective 3?'
+      };
+      try {
+        const res = await fetch('/api/chat_welcome', { cache: 'no-store' });
+        const j = await res.json();
+        if (titleEl) titleEl.textContent = j.title || fallback.title;
+        if (subEl) subEl.textContent = j.subtitle || fallback.subtitle;
+        if (inp) inp.placeholder = j.placeholder || fallback.placeholder;
+        appendMsg('bot', j.opening || fallback.opening);
+      } catch (e) {
+        if (titleEl) titleEl.textContent = fallback.title;
+        if (subEl) subEl.textContent = fallback.subtitle;
+        if (inp) inp.placeholder = fallback.placeholder;
+        appendMsg('bot', fallback.opening);
+      }
+    }
+
+    async function sendChat() {
+      const inp = document.getElementById('chatInput');
+      const msg = inp.value.trim();
+      if (!msg) return;
+      appendMsg('user', msg);
+      inp.value = '';
+      const res = await fetch('/api/chatbot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+      const d = await res.json();
+      appendMsg('bot', d.reply);
+    }
+
+    document.getElementById('chatInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') sendChat();
+    });
+    (async function boot() {
+      await initChatLabels();
+      await loadReportData();
+    })();
+  </script>
+</body>
+</html>

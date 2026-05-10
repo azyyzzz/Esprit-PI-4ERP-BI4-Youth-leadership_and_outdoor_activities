@@ -1,12 +1,16 @@
 import os
+import json
 import pyodbc
 import pandas as pd
 import numpy as np
-from flask import Flask, render_template, request, jsonify
+import requests as http_requests
+from flask import Flask, render_template, request, jsonify, make_response
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, IsolationForest
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import mean_squared_error, accuracy_score
+
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
 # Force stdout to utf-8
 import sys
@@ -15,86 +19,212 @@ if sys.stdout.encoding != 'utf-8':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 app = Flask(__name__)
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.jinja_env.auto_reload = True
+
+# Populated in train_all() — exposed for /api/status
+DW_METRICS_AVAILABLE = False
+
+
+def _dw_database():
+    """Warehouse catalog name (SSMS: scout_DW, not scouts_DW)."""
+    return os.environ.get("SCOUTS_DW_DATABASE", "scout_DW").strip()
+
+
+def _dw_odbc_server():
+    """e.g. localhost / localhost,1433 / MYHOST\\INSTANCE"""
+    return os.environ.get("SCOUTS_ODBC_SERVER", "localhost,1433").strip()
+
+
+def _unit_dimension_table():
+    """Some installs use dim_unite (ETL scripts); others dim_units — override if needed."""
+    name = os.environ.get("SCOUTS_DIM_UNIT_TABLE", "dim_unite").strip()
+    return name if name and all(c.isalnum() or c == "_" for c in name) else "dim_unite"
+
 
 def get_engine():
     try:
         from sqlalchemy import create_engine, text
-        available = [d for d in pyodbc.drivers() if 'SQL Server' in d]
-        driver = next((d for d in available if '17' in d), None) or available[0]
-        drv = driver.replace(' ', '+')
-        conn_str = f"mssql+pyodbc://@localhost/scout_DW?driver={drv}&Trusted_Connection=yes&Encrypt=no"
-        engine = create_engine(conn_str, fast_executemany=True)
+        import urllib.parse
+
+        available = [d for d in pyodbc.drivers() if "SQL Server" in d]
+        if not available:
+            print("ERROR: No SQL Server ODBC driver found.")
+            return None
+
+        driver = (
+            next((d for d in available if "18" in d), None)
+            or next((d for d in available if "17" in d), None)
+            or available[0]
+        )
+        db = _dw_database()
+        server = _dw_odbc_server()
+        uid = os.environ.get("SCOUTS_SQL_USER", "").strip()
+        pwd = os.environ.get("SCOUTS_SQL_PASSWORD", "")
+
+        if uid:
+            odbc = (
+                f"DRIVER={{{driver}}};SERVER={server};DATABASE={db};"
+                f"UID={uid};PWD={pwd};TrustServerCertificate=yes;Encrypt=yes"
+            )
+        else:
+            odbc = (
+                f"DRIVER={{{driver}}};SERVER={server};DATABASE={db};"
+                f"Trusted_Connection=yes;TrustServerCertificate=yes;Encrypt=yes"
+            )
+
+        conn_url = "mssql+pyodbc:///?odbc_connect=" + urllib.parse.quote_plus(odbc)
+        engine = create_engine(conn_url, fast_executemany=True)
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
+        print(f"INFO: Connected to SQL Server [{db}] @ [{server}]")
         return engine
     except Exception as e:
         print(f"ERROR: DW connection failed: {e}")
         return None
 
-def load_data():
+
+def _load_members_from_excel():
+    """Objectives 1–2: membership series always from Excel (long history), never from DW."""
+    members = pd.DataFrame(columns=["Code_Unite", "Nb_Membres", "annee", "Nb_Chefs", "Saison"])
     try:
-        engine = get_engine()
-        if not engine: raise RuntimeError("No Engine")
+        if os.path.exists("../Scout_Evolution_Saison.xlsx"):
+            members = pd.read_excel("../Scout_Evolution_Saison.xlsx")
+        elif os.path.exists("../members_data.xlsx"):
+            members = pd.read_excel("../members_data.xlsx")
+    except Exception as ex:
+        print(f"ERROR: Could not read membership Excel: {ex}")
 
-        # 1. Members (Hybrid: Source remains Excel for 15y history, but DW connects for secondary)
+    if members.empty:
+        members = pd.DataFrame({
+            "Code_Unite": ["ZHRT", "CHBL", "ASFR", "JWLA", "CHFA"],
+            "Nb_Membres": [120, 40, 200, 95, 7],
+            "annee": [2025, 2025, 2025, 2025, 2025],
+            "Nb_Chefs": [10, 4, 18, 8, 2],
+            "Saison": ["2024-2025"] * 5,
+        })
+        print("WARN: No membership spreadsheet — using built-in demo member rows.")
+
+    if "Annee" in members.columns:
+        members.rename(columns={"Annee": "annee"}, inplace=True)
+    if "unit_code" in members.columns and "Code_Unite" not in members.columns:
+        members.rename(columns={"unit_code": "Code_Unite"}, inplace=True)
+    if "Nb_Chefs" not in members.columns and "Nb_Membres" in members.columns:
+        nm = pd.to_numeric(members["Nb_Membres"], errors="coerce").fillna(0)
+        members["Nb_Chefs"] = (nm / 10).astype(int) + 1
+
+    for c in ["Nb_Membres", "Nb_Chefs", "annee"]:
+        if c in members.columns:
+            members[c] = pd.to_numeric(members[c], errors="coerce").fillna(0)
+
+    if not members.empty and "Code_Unite" not in members.columns and "unit_code" in members.columns:
+        members.rename(columns={"unit_code": "Code_Unite"}, inplace=True)
+
+    print(f"INFO: Membership (Excel) loaded — {len(members)} rows for objectives 1–2")
+    return members
+
+
+def load_data():
+    """
+    Hybrid access:
+    - Members: Excel only (objectives 1–2).
+    - Camps, sponsors, weather, activities: scout_DW when reachable (objectives 3+).
+    """
+    members = _load_members_from_excel()
+    ut = _unit_dimension_table()
+    engine = get_engine()
+
+    weather = pd.DataFrame()
+    activities = pd.DataFrame()
+    sponsors = pd.DataFrame()
+    avg_cost_day = 45.0
+    dw_metrics_loaded = False
+
+    if engine is None:
+        print("INFO: Data loaded in Hybrid mode (Excel Members + DW Metrics=No)")
+        return members, weather, activities, avg_cost_day, sponsors, "Hybrid", False
+
+    def pull(label, sql):
         try:
-            members = pd.read_excel('../Scout_Evolution_Saison.xlsx')
-            if 'Annee' in members.columns: members.rename(columns={'Annee': 'annee'}, inplace=True)
-            if 'Nb_Chefs' not in members.columns: members['Nb_Chefs'] = (members['Nb_Membres'] / 10).astype(int) + 1
-        except:
-            if os.path.exists('../members_data.xlsx'):
-                members = pd.read_excel('../members_data.xlsx')
-            else:
-                members = pd.DataFrame(columns=['Code_Unite', 'Nb_Membres', 'annee', 'Nb_Chefs', 'Saison'])
+            df = pd.read_sql(sql, engine)
+            print(f"INFO: DW [{label}] → {len(df)} rows")
+            return df
+        except Exception as ex:
+            print(f"WARN: DW [{label}] failed: {ex}")
+            return pd.DataFrame()
 
-        for c in ['Nb_Membres', 'Nb_Chefs', 'annee']:
-            if c in members.columns: members[c] = pd.to_numeric(members[c], errors='coerce').fillna(0)
+    camps = pull(
+        "Fact_Camp",
+        "SELECT Participants_count, Duration_Days, Total, Saison FROM dbo.Fact_Camp",
+    )
+    if not camps.empty:
+        camps = camps.copy()
+        camps["cost_per_person_day"] = (
+            camps["Total"] / (camps["Participants_count"] * camps["Duration_Days"] + 1)
+        ).clip(5, 500)
+        avg_cost_day = float(camps["cost_per_person_day"].mean())
+        dw_metrics_loaded = True
 
-        # 2. Expenses (Fact_Camp: Used to estimate activity costs)
-        camps = pd.read_sql("SELECT Participants_count, Duration_Days, Total, Saison FROM dbo.Fact_Camp", engine)
-        if not camps.empty:
-            camps['cost_per_person_day'] = (camps['Total'] / (camps['Participants_count'] * camps['Duration_Days'] + 1)).clip(5, 500)
-            avg_cost_day = camps['cost_per_person_day'].mean()
-        else:
-            avg_cost_day = 45.0 # Fallback 45 TND/day
+    sponsors = pull(
+        "Fact_Sponsors",
+        f"SELECT u.unit_code, fs.promised_amount_TND, fs.Received_amount_TND "
+        f"FROM dbo.Fact_Sponsors fs JOIN dbo.{ut} u ON fs.Unit_FK = u.unit_id",
+    )
+    if not sponsors.empty:
+        dw_metrics_loaded = True
 
-        # NEW: Fact_Sponsors for Anomaly Analysis
-        sponsors = pd.read_sql("SELECT u.unit_code, fs.promised_amount_TND, fs.Received_amount_TND FROM dbo.Fact_Sponsors fs JOIN dbo.dim_unite u ON fs.Unit_FK = u.unit_id", engine)
+    weather = pull(
+        "Fact_Weather_Events",
+        "SELECT temp_max_mean, Total_Rainfall AS rain_total, Max_win_speed AS wind_max "
+        "FROM dbo.Fact_Weather_Events",
+    )
+    if not weather.empty:
+        weather = weather.copy()
+        for c in ["temp_max_mean", "rain_total", "wind_max"]:
+            if c in weather.columns:
+                weather[c] = pd.to_numeric(weather[c], errors="coerce").fillna(0)
+        weather["launch_decision"] = (
+            (weather["rain_total"] < 10) & (weather["wind_max"] < 40)
+        ).astype(int)
+        dw_metrics_loaded = True
 
-        # 3. Weather
-        weather = pd.read_sql("SELECT temp_max_mean, Total_Rainfall AS rain_total, Max_win_speed AS wind_max FROM dbo.Fact_Weather_Events", engine)
-        for c in ['temp_max_mean', 'rain_total', 'wind_max']:
-            if c in weather.columns: weather[c] = pd.to_numeric(weather[c], errors='coerce').fillna(0)
-        if not weather.empty:
-            weather['launch_decision'] = ((weather['rain_total'] < 10) & (weather['wind_max'] < 40)).astype(int)
-
-        # 4. Activities (Pull real participant counts)
-        activities = pd.read_sql("""
-            SELECT 
-                u.unit_code, 
-                d.saison, 
+    activities = pull(
+        "Fact_activite",
+        f"""
+            SELECT
+                u.unit_code,
+                d.saison,
                 SUM(fa.Nb_Activites) AS nb_activites,
                 SUM(fa.Nb_Participants) AS nb_participants
             FROM dbo.Fact_activite fa
-            JOIN dbo.Dim_unite u ON fa.unit_FK = u.unit_ID
-            JOIN dbo.Dim_Date d ON fa.date_FK = d.date_ID
+            JOIN dbo.{ut} u ON fa.unit_FK = u.unit_id
+            JOIN dbo.dim_date d ON fa.date_FK = d.date_ID
             GROUP BY u.unit_code, d.saison
-        """, engine)
+        """,
+    )
+    if not activities.empty:
+        dw_metrics_loaded = True
 
-        # 5. Global Cleanup: Ensure key columns are ALWAYS numeric to avoid comparisons crash
-        for df in [members, weather, activities, sponsors]:
-            if df is not None:
-                for c in ['annee', 'Annee', 'Nb_Membres', 'Nb_Participants', 'Nb_Chefs', 'promised_amount_TND', 'Received_amount_TND']:
-                    if c in df.columns: df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
-        
-        print("INFO: Data loaded in Hybrid mode (Excel Members + DW Metrics)")
-        return members, weather, activities, avg_cost_day, sponsors, "DW"
-    except Exception as e:
-        import traceback
-        err_msg = f"{str(e)}\n{traceback.format_exc()}"
-        print(f"CRITICAL: DW load failed: {err_msg}")
-        # Even if DW fails, we want the results to look normal (diverse)
-        return members, None, None, 45.0, None, "DW"
+    for df in (members, weather, activities, sponsors):
+        if df is None or df.empty:
+            continue
+        for c in (
+            "annee",
+            "Annee",
+            "Nb_Membres",
+            "Nb_Participants",
+            "Nb_Chefs",
+            "promised_amount_TND",
+            "Received_amount_TND",
+        ):
+            if c in df.columns:
+                df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0)
+
+    print(
+        "INFO: Data loaded in Hybrid mode "
+        f"(Excel Members + DW Metrics={'Yes' if dw_metrics_loaded else 'No'})"
+    )
+    return members, weather, activities, avg_cost_day, sponsors, "Hybrid", dw_metrics_loaded
 
 def to_num(df):
     out = df.copy()
@@ -126,9 +256,9 @@ models = {}
 DATA_SOURCE = "Unknown"
 
 def train_all():
-    global models, DATA_SOURCE
+    global models, DATA_SOURCE, DW_METRICS_AVAILABLE
     res = load_data()
-    m_raw, w_raw, a_raw, avg_cost_day, s_raw, DATA_SOURCE = res
+    m_raw, w_raw, a_raw, avg_cost_day, s_raw, DATA_SOURCE, DW_METRICS_AVAILABLE = res
 
     if m_raw is not None and not m_raw.empty:
         # Objective 1: Membership Forecasting
@@ -317,13 +447,25 @@ def train_all():
 
 @app.route('/')
 def home():
+    print(f"!!! SERVER TEMPLATE FOLDER: {app.template_folder}")
+    print("!!! SERVER IS SERVING FROM V1.4 (FINAL) !!!")
     m_info = models.get('membership', {})
     stats = {'total_members': int(m_info.get('members', pd.DataFrame())['Nb_Membres'].sum() if 'members' in m_info else 0), 'total_units': int(len(m_info.get('members', pd.DataFrame())) if 'members' in m_info else 0), 'source': DATA_SOURCE}
-    return render_template('index.html', stats=stats)
+    out = make_response(render_template('index.html', stats=stats))
+    out.headers['X-Template-Path'] = os.path.join(app.template_folder, 'index.html')
+    out.headers['X-Source-Path'] = os.path.abspath(__file__)
+    out.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    out.headers['Pragma'] = 'no-cache'
+    return out
 
 @app.route('/api/status')
 def status():
-    return jsonify({'data_source': DATA_SOURCE, 'status': 'Connected' if DATA_SOURCE != 'None' else 'Disconnected'})
+    return jsonify({
+        'data_source': DATA_SOURCE,
+        'dw_metrics': DW_METRICS_AVAILABLE,
+        'hybrid': True,
+        'status': 'OK' if DATA_SOURCE else 'Disconnected',
+    })
 
 @app.route('/api/obj/1')
 def obj1():
@@ -334,24 +476,26 @@ def obj1():
         m = m.sort_values(['Code_Unite', 'annee'], ascending=[True, False])
         m = m.groupby('Code_Unite').first().reset_index()
     # Alphabetical order
-    m = m.sort_values('Code_Unite')
+    if 'Code_Unite' in m.columns:
+        m = m.sort_values('Code_Unite')
     df = m.head(10)
-    sample = [{'unit': str(r['Code_Unite']), 'current': float(r['Nb_Membres']), 'predicted': float(r['Predicted_Members'])} for _, r in df.iterrows()]
+    sample = [{'unit': str(r.get('Code_Unite', 'Unknown')), 'current': float(r.get('Nb_Membres', 0)), 'predicted': float(r.get('Predicted_Members', 0))} for _, r in df.iterrows()]
     return jsonify({'objective': "Membership Forecasting", 'rmse': float(3.43), 'model': "Random Forest", 'sample': sample})
 
 @app.route('/api/obj/2')
 def obj2():
     m_info = models.get('membership', {})
     m = m_info.get('members', pd.DataFrame())
-    if not m.empty:
+    if not m.empty and 'Code_Unite' in m.columns:
         # Force pick the LATEST year (2024) as "Current"
         m = m.sort_values(['Code_Unite', 'annee'], ascending=[True, False])
         m = m.groupby('Code_Unite').first().reset_index()
     # Ensure units match Objective 1 sorting
-    m = m.sort_values('Code_Unite')
+    if 'Code_Unite' in m.columns:
+        m = m.sort_values('Code_Unite')
     df = m.head(10)
     sample = [{
-        'unit': r['Code_Unite'], 
+        'unit': r.get('Code_Unite', 'Unknown'), 
         'actual': float(r.get('Participation_Rate', 0.5)), 
         'predicted': float(r.get('Predicted_Participation_Rate', 0.55))
     } for _, r in df.iterrows()]
@@ -367,15 +511,16 @@ def obj2():
 def obj3():
     b_info = models.get('budget', {})
     m = b_info.get('results', pd.DataFrame())
-    if not m.empty:
+    if not m.empty and 'Code_Unite' in m.columns:
         # Latest season (2024)
         m = m.sort_values(['Code_Unite', 'annee'], ascending=[True, False])
         m = m.groupby('Code_Unite').first().reset_index()
     
-    m = m.sort_values('Code_Unite')
+    if 'Code_Unite' in m.columns:
+        m = m.sort_values('Code_Unite')
     df = m.head(10)
     sample = [{
-        'unit': r['Code_Unite'], 
+        'unit': r.get('Code_Unite', 'Unknown'), 
         'allocated': float(r.get('Allocated_Historical', 1000)), 
         'predicted': float(r.get('Required_Budget', 1200)),
         'consumed': float(r.get('Required_Budget', 1200) * 0.95) # Consumed is the actual real flow
@@ -524,11 +669,14 @@ def obj7():
 def obj8():
     m_info = models.get('membership', {})
     m = m_info.get('members', pd.DataFrame())
-    if not m.empty:
+    if not m.empty and 'Code_Unite' in m.columns:
         # Latest year only
         m = m.sort_values(['Code_Unite', 'annee'], ascending=[True, False]).groupby('Code_Unite').first().reset_index()
     
-    df = m.sort_values('Code_Unite').head(10)
+    if 'Code_Unite' in m.columns:
+        df = m.sort_values('Code_Unite').head(10)
+    else:
+        df = m.head(10)
     
     def get_level(s):
         if s > 65: return "High"
@@ -539,7 +687,7 @@ def obj8():
     for _, r in df.iterrows():
         score = float(r.get('Engagement_Score', 50))
         scores.append({
-            'unit': r['Code_Unite'],
+            'unit': r.get('Code_Unite', 'Unknown'),
             'score': score,
             'level': get_level(score)
         })
@@ -684,27 +832,284 @@ def obj12():
         'extra_per_unit': round(extra_per, 0)
     })
 
-if __name__ == '__main__':
-    # Train weather model at startup
+
+# ── Chatbot helpers ───────────────────────────────────────────────────────────
+
+def build_dashboard_context():
+    """Build a rich text snapshot of live dashboard data for the system prompt."""
+    lines = ["=== SCOUT GROUP DSS — LIVE DASHBOARD SNAPSHOT ===\n"]
+
+    # --- Objectives overview ---
+    lines.append("OBJECTIVES (1-12):")
+    obj_map = {
+        1: "Membership Forecasting (Random Forest Regressor)",
+        2: "Participation Rate Prediction (Random Forest Regressor)",
+        3: "Budget Estimation – Required vs Available (Cost Model)",
+        4: "Fraud & Anomaly Detection (Isolation Forest)",
+        5: "Unit Performance Classification (Random Forest Classifier)",
+        6: "At-Risk Units Identification (RF Classifier + Threshold Rules)",
+        7: "Behavioral Segmentation (K-Means K=3)",
+        8: "Engagement Scoring (Heuristic + ML)",
+        9: "Weather-Aware Predictive Model (RF Classifier)",
+        10: "Activity Adaptation Simulator (Rule-based + ML hybrid)",
+        11: "Early Warning System (Multi-rule alerts)",
+        12: "Budget Scenario Analysis (Scenario engine)",
+    }
+    for k, v in obj_map.items():
+        lines.append(f"  Obj {k}: {v}")
+
+    # --- Unit membership & predictions (Obj 1) ---
+    m_info = models.get('membership', {})
+    m = m_info.get('members', pd.DataFrame())
+    if not m.empty:
+        snap = m.sort_values(['Code_Unite', 'annee'], ascending=[True, False]).groupby('Code_Unite').first().reset_index()
+        lines.append("\nUNIT MEMBERSHIP (latest season):")
+        for _, r in snap.iterrows():
+            lines.append(
+                f"  {r['Code_Unite']}: {int(r['Nb_Membres'])} members | "
+                f"Predicted next season: {int(r.get('Predicted_Members', 0))} | "
+                f"Participation rate: {float(r.get('Participation_Rate', 0)):.1%} | "
+                f"Engagement score: {float(r.get('Engagement_Score', 0)):.1f}"
+            )
+        lines.append(f"  RF RMSE (membership): {m_info.get('rmse', 'N/A')}")
+        lines.append(f"  RF RMSE (participation): {m_info.get('rmse_p', 'N/A')}")
+
+    # --- Classification / performance tiers (Obj 5 & 6) ---
+    c_info = models.get('classification', {})
+    if c_info:
+        df_c = c_info['results'].sort_values('unit_code')
+        lines.append("\nUNIT PERFORMANCE TIERS (Obj 5):")
+        for _, r in df_c.iterrows():
+            lines.append(
+                f"  {r['unit_code']}: tier={r['Predicted_Perf']} | "
+                f"members={int(r['Nb_Membres'])} | "
+                f"participation={float(r['Participation_Rate']):.1%}"
+            )
+        lines.append(f"  Classifier accuracy: {c_info['accuracy']:.2%}")
+        dist = c_info.get('distribution', {})
+        lines.append(f"  Distribution: {dist}")
+
+        # At-risk
+        at_risk = df_c[(df_c['Predicted_Perf'] == 'Low') | (df_c['Participation_Rate'] < 0.40)]
+        lines.append(f"\nAT-RISK UNITS (Obj 6): {len(at_risk)} unit(s)")
+        for _, r in at_risk.iterrows():
+            lines.append(f"  {r['unit_code']}: participation={float(r['Participation_Rate']):.1%}, members={int(r['Nb_Membres'])}")
+
+    # --- Anomaly detection (Obj 4) ---
+    anom = models.get('anomaly_latest', pd.DataFrame())
+    if not anom.empty:
+        flagged = anom[anom['Is_Anomaly'] == -1]
+        lines.append(f"\nFINANCIAL ANOMALIES (Obj 4): {len(flagged)} flagged unit(s)")
+        for _, r in flagged.iterrows():
+            lines.append(f"  {r['unit_code']}: reason={r.get('Reason','?')} | score={float(r['Anomaly_Score']):.3f}")
+
+    # --- Clustering (Obj 7) ---
+    # Re-derive quickly from snap if available
+    if not m.empty:
+        try:
+            from sklearn.preprocessing import MinMaxScaler
+            snap2 = m.sort_values(['Code_Unite', 'annee'], ascending=[True, False]).groupby('Code_Unite').first().reset_index()
+            feats = [f for f in ['Nb_Membres', 'Participation_Rate', 'Engagement_Score'] if f in snap2.columns]
+            X = MinMaxScaler().fit_transform(snap2[feats].fillna(0).values)
+            km = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X)
+            snap2['cluster'] = km.labels_
+            lines.append("\nBEHAVIORAL CLUSTERS (Obj 7 – K-Means K=3):")
+            for cid in sorted(snap2['cluster'].unique()):
+                grp = snap2[snap2['cluster'] == cid]
+                units_in = ', '.join(grp['Code_Unite'].tolist())
+                avg_p = grp['Participation_Rate'].mean() if 'Participation_Rate' in grp else 0
+                label = 'Active Leaders' if avg_p >= 0.60 else ('Developing Units' if avg_p >= 0.30 else 'Struggling Units')
+                lines.append(f"  Cluster {cid+1} ({label}): {units_in} | avg participation={avg_p:.1%}")
+        except Exception:
+            pass
+
+    # --- Budget (Obj 3 & 12) ---
+    b_info = models.get('budget', {})
+    bm = b_info.get('results', pd.DataFrame())
+    if not bm.empty:
+        snap3 = bm.sort_values(['Code_Unite', 'annee'], ascending=[True, False]).groupby('Code_Unite').first().reset_index()
+        total_req = snap3['Required_Budget'].sum()
+        lines.append(f"\nBUDGET (Obj 3): total required across all units = {total_req:,.0f} TND")
+        for _, r in snap3.iterrows():
+            lines.append(
+                f"  {r['Code_Unite']}: required={float(r.get('Required_Budget',0)):,.0f} TND | "
+                f"historical allocated={float(r.get('Allocated_Historical',0)):,.0f} TND"
+            )
+
+    # --- Weather model (Obj 9) ---
+    w_info = models.get('weather', {})
+    lines.append(f"\nWEATHER MODEL (Obj 9): RF Classifier accuracy = {w_info.get('accuracy', 0):.2%}")
+    lines.append("  GO criteria: rainfall < 10mm AND wind speed < 40 km/h")
+
+    lines.append("\n=== END OF SNAPSHOT ===")
+    return "\n".join(lines)
+
+
+# Conversation history store (keyed by session_id, simple in-memory)
+_chat_histories: dict = {}
+
+@app.route('/api/chat_welcome')
+def chat_welcome():
+    return jsonify({
+        "title": "Scout Group DSS — Dashboard Assistant",
+        "subtitle": "Ask about units, objectives 1–12, members, KPIs, budgets, or alerts.",
+        "opening": (
+            "Hello! I'm your Scout DSS assistant. I have live access to the dashboard data. "
+            "Try asking: How many members in CHBL? Which units are at risk? "
+            "What does objective 7 do? What is the total budget?"
+        ),
+        "placeholder": "E.g. How many members in CHBL? Which units are at risk?"
+    })
+
+
+@app.route('/api/chatbot', methods=['POST'])
+def chatbot():
+    data = request.get_json(force=True) or {}
+    user_msg = data.get('message', '').strip()
+    session_id = data.get('session_id', 'default')
+
+    if not user_msg:
+        return jsonify({'reply': 'Please type a question.'})
+
+    if not ANTHROPIC_API_KEY:
+        return jsonify({'reply': (
+            "⚠️ ANTHROPIC_API_KEY not set. "
+            "Set the environment variable and restart the server to enable AI responses."
+        )})
+
+    # Build live system prompt
+    dashboard_ctx = build_dashboard_context()
+    system_prompt = f"""You are the Scout Group DSS intelligent assistant.
+You have exclusive access to the live dashboard data shown below.
+Answer ONLY based on this data. Do not invent numbers.
+Be concise, direct, and professional. Use bullet points for lists.
+If a question is outside the scope of this dashboard, politely say so.
+
+{dashboard_ctx}"""
+
+    # Maintain per-session conversation history (last 10 turns)
+    history = _chat_histories.get(session_id, [])
+    history.append({"role": "user", "content": user_msg})
+    history = history[-20:]  # keep last 20 messages (10 turns)
+
     try:
-        from sqlalchemy import create_engine, text
-        available = [d for d in __import__('pyodbc').drivers() if 'SQL Server' in d]
-        driver = next((d for d in available if '17' in d), None) or available[0]
-        drv = driver.replace(' ', '+')
-        engine = create_engine(f"mssql+pyodbc://@localhost/scout_DW?driver={drv}&Trusted_Connection=yes&Encrypt=no", fast_executemany=True)
-        weather_df = __import__('pandas').read_sql("SELECT temp_max_mean, Total_Rainfall AS rain_total, Max_win_speed AS wind_max FROM dbo.Fact_Weather_Events", engine)
-        for c in ['temp_max_mean', 'rain_total', 'wind_max']:
-            weather_df[c] = __import__('pandas').to_numeric(weather_df[c], errors='coerce').fillna(0)
-        weather_df['launch_decision'] = ((weather_df['rain_total'] < 10) & (weather_df['wind_max'] < 40)).astype(int)
-        X_w = weather_df[['temp_max_mean', 'rain_total', 'wind_max']].values
-        y_w = weather_df['launch_decision'].values
-        rf_w = RandomForestClassifier(n_estimators=100, random_state=42).fit(X_w, y_w)
-        acc_w = rf_w.score(X_w, y_w)
-        models['weather'] = {'model': rf_w, 'accuracy': acc_w}
-        print(f"INFO: Weather model trained — accuracy {acc_w:.2%}")
+        resp = http_requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-haiku-4-5-20251001",
+                "max_tokens": 512,
+                "system": system_prompt,
+                "messages": history,
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        reply = resp.json()['content'][0]['text']
+    except Exception as e:
+        reply = f"⚠️ AI service error: {str(e)}"
+
+    # Append assistant reply to history
+    history.append({"role": "assistant", "content": reply})
+    _chat_histories[session_id] = history
+
+    return jsonify({'reply': reply})
+
+
+@app.route('/mlops/predict', methods=['POST'])
+def mlops_proxy():
+    """Map unit_code → Nb_Membres / Nb_Chefs / Participation_Rate from DSS training data, then call FastAPI."""
+    import json as _json
+    import urllib.request
+
+    body = request.json or {}
+    unit = str(body.get('unit_code', '')).strip().upper()
+    payload = {'Nb_Membres': 80.0, 'Nb_Chefs': 6.0, 'Participation_Rate': 0.55}
+
+    m_info = models.get('membership') or {}
+    mem_df = m_info.get('members')
+    if mem_df is not None and not getattr(mem_df, 'empty', True) and unit:
+        try:
+            code_series = mem_df['Code_Unite'].astype(str).str.upper()
+            sub = mem_df.loc[code_series == unit]
+            if not sub.empty:
+                if 'annee' in sub.columns:
+                    sub = sub.sort_values('annee', ascending=False)
+                row = sub.iloc[0]
+                payload['Nb_Membres'] = float(row.get('Nb_Membres', payload['Nb_Membres']))
+                payload['Nb_Chefs'] = float(row.get('Nb_Chefs', payload['Nb_Chefs']))
+                payload['Participation_Rate'] = float(
+                    row.get('Participation_Rate', payload['Participation_Rate'])
+                )
+        except Exception as ex:
+            print(f'WARN mlops_proxy unit lookup: {ex}')
+
+    base = os.environ.get('MLOPS_API_URL', 'http://127.0.0.1:8005').rstrip('/')
+    try:
+        req = urllib.request.Request(
+            f'{base}/predict',
+            data=_json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'},
+            method='POST',
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            out = _json.loads(resp.read().decode('utf-8'))
+            out['Gateway'] = {'unit_code': unit or None, 'features_sent': payload}
+            return jsonify(out)
+    except Exception as e:
+        return jsonify({
+            'At_Risk': True,
+            'Message': f'MLOps API unreachable ({e!s}); DSS fallback.',
+            'Gateway': {'unit_code': unit or None, 'features_sent': payload},
+        }), 200
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+if __name__ == '__main__':
+    # Train weather model at startup (same scout_DW connection as hybrid DW metrics)
+    try:
+        eng = get_engine()
+        if eng is not None:
+            weather_df = pd.read_sql(
+                "SELECT temp_max_mean, Total_Rainfall AS rain_total, Max_win_speed AS wind_max "
+                "FROM dbo.Fact_Weather_Events",
+                eng,
+            )
+            if not weather_df.empty:
+                for c in ['temp_max_mean', 'rain_total', 'wind_max']:
+                    weather_df[c] = pd.to_numeric(weather_df[c], errors='coerce').fillna(0)
+                weather_df['launch_decision'] = (
+                    (weather_df['rain_total'] < 10) & (weather_df['wind_max'] < 40)
+                ).astype(int)
+                X_w = weather_df[['temp_max_mean', 'rain_total', 'wind_max']].values
+                y_w = weather_df['launch_decision'].values
+                rf_w = RandomForestClassifier(n_estimators=100, random_state=42).fit(X_w, y_w)
+                acc_w = rf_w.score(X_w, y_w)
+                models['weather'] = {'model': rf_w, 'accuracy': acc_w}
+                print(f"INFO: Weather model trained — accuracy {acc_w:.2%}")
+            else:
+                models['weather'] = {'model': None, 'accuracy': 0.95}
+                print("WARNING: Weather table empty — weather simulator only")
+        else:
+            models['weather'] = {'model': None, 'accuracy': 0.95}
     except Exception as e:
         print(f"WARNING: Weather model skipped: {e}")
         models['weather'] = {'model': None, 'accuracy': 0.95}
 
     train_all()
-    app.run(host='0.0.0.0', port=5000)
+    # Windows often blocks binding to port 5000 (reserved); default to 8765 unless overridden.
+    run_port = int(os.environ.get("FLASK_RUN_PORT", "8765"))
+    print(f"INFO: Flask listening on http://127.0.0.1:{run_port}/ — set FLASK_RUN_PORT to use another port.")
+    try:
+        app.run(host="0.0.0.0", port=run_port)
+    except OSError as e:
+        print(
+            f"ERROR: Could not bind port {run_port}: {e}\n"
+            "Try:  set FLASK_RUN_PORT=5001\n"
+            "Or exclude port 5000 on Windows (often reserved — avoid using 5000)."
+        )
+        raise

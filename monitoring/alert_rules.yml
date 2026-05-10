@@ -1,0 +1,62 @@
+groups:
+  - name: scouts_mlops_alerts
+    rules:
+      # Alert 1: High Latency
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(api_request_duration_seconds_bucket[5m])) > 0.5
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency detected"
+          description: "P95 latency is {{ $value | humanizeDuration }} (threshold: 500ms)"
+
+      # Alert 2: High Error Rate
+      - alert: HighErrorRate
+        expr: rate(api_errors_total[5m]) / rate(api_requests_total[5m]) > 0.05
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # Alert 3: Accuracy Degradation
+      - alert: AccuracyDegradation
+        expr: model_accuracy < 0.87
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Model accuracy dropped below threshold"
+          description: "Current accuracy {{ $value }} is below 0.87 (baseline: 0.92, drop > 5%)"
+
+      # Alert 4: Data Drift Detected
+      - alert: DataDriftDetected
+        expr: data_drift_score > 0.30
+        for: 15s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Data drift detected"
+          description: "Drift score {{ $value }} exceeds threshold 0.30"
+
+      # Alert 5: Low Model Confidence
+      - alert: LowModelConfidence
+        expr: model_confidence < 0.70
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low model prediction confidence"
+          description: "Model confidence {{ $value }} is below 0.70 threshold"
+
+      # Alert 6: Model Not Loaded
+      - alert: ModelNotLoaded
+        expr: data_freshness_seconds == 0
+        for: 60s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Model not loaded"
+          description: "The ML model has not been loaded — predictions will fail"

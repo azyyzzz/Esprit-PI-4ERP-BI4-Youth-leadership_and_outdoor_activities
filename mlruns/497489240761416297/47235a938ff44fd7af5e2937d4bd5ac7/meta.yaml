@@ -1,0 +1,15 @@
+artifact_uri: file://C:\Users\MSI\Desktop\wetransfer_scouts_2026-02-28_1339\Scouts\mlruns/497489240761416297/47235a938ff44fd7af5e2937d4bd5ac7/artifacts
+end_time: 1778346002666
+entry_point_name: ''
+experiment_id: '497489240761416297'
+lifecycle_stage: active
+run_id: 47235a938ff44fd7af5e2937d4bd5ac7
+run_name: Full_Objective_Training
+run_uuid: 47235a938ff44fd7af5e2937d4bd5ac7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778346002632
+status: 3
+tags: []
+user_id: MSI

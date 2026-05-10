@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MLOps Mission Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #2c3e50; max-width: 900px; margin: 0 auto; padding: 40px; background-color: #fff; }
+        h1 { color: #1e4d2b; border-bottom: 3px solid #b5860d; padding-bottom: 15px; font-size: 2.2em; text-align: center; margin-bottom: 30px; }
+        h3 { color: #2c7241; margin-top: 35px; font-size: 1.4em; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        p { font-size: 1.05em; }
+        strong { color: #111; }
+        ul { background: #fbfbfb; padding: 20px 40px; border-radius: 8px; border: 1px solid #f0f0f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        li { margin-bottom: 12px; }
+        hr { margin: 40px 0; border: none; border-top: 2px solid #eaeaea; }
+        .footer { text-align: left; margin-top: 20px; font-size: 1.8em; font-weight: bold; color: #1e4d2b; }
+        .button-print {
+            display: block; width: 220px; margin: 0 auto 30px auto; padding: 12px 20px; font-size: 16px; font-weight: bold;
+            cursor: pointer; background: #b5860d; color: white; border: none; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center; font-family: 'Segoe UI', sans-serif;
+        }
+        .button-print:hover { background: #8a650a; }
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; margin: 0; max-width: 100%; }
+            ul { box-shadow: none; border: none; padding: 10px 20px; background: transparent; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="no-print button-print" onclick="window.print()">📥 Save as PDF</button>
+
+    <h1>🚀 MLOps Mission: Industrialization & Deployment Report</h1>
+
+    <p><strong>Project:</strong> Scouts Tunisia DSS<br>
+    <strong>Phase:</strong> Week S12 - MLOps Approach Integration</p>
+
+    <p>This report outlines exactly how each validation criterion requested in the mission brief was successfully implemented, resolved, and deployed.</p>
+
+    <hr>
+
+    <h3>✅ 1. Experiment Tracking (MLflow)</h3>
+    <ul>
+        <li><strong>Objective:</strong> Track parameters, metrics, and ensure at least two runs are comparable.</li>
+        <li><strong>Implementation:</strong> Developed the script <code>mlops_train.py</code> to seamlessly execute the At-Risk Unit detection model.</li>
+        <li><strong>Validation:</strong> MLflow is now successfully instantiated locally via its default FileStore. The experiment <strong>Scouts_AtRisk_Classification</strong> logged two distinct runs (e.g., <code>lyrical-wolf</code> and <code>unequaled-mink</code>) ensuring full comparability in the MLflow UI's Table tab.</li>
+        <li><strong>Details Tracked:</strong> Input data schemas, Hyper-parameters (<code>n_estimators</code>, <code>max_depth</code>), and Performance metrics (<code>accuracy=100%</code>).</li>
+    </ul>
+
+    <h3>✅ 2. Automated Training Pipeline</h3>
+    <ul>
+        <li><strong>Objective:</strong> Ensure an end-to-end pipeline (preprocessing → training → evaluation → saving) that requires no manual intervention.</li>
+        <li><strong>Implementation:</strong> The <code>mlops_train.py</code> handles the complete cycle. By running a single command (<code>python mlops_train.py</code>), the script automatically scales features via deterministic logic, trains the Random Forest classifier, scores the test set, and pipes the output cleanly to the MLflow logger.</li>
+    </ul>
+
+    <h3>✅ 3. Model Management</h3>
+    <ul>
+        <li><strong>Objective:</strong> Save, version, and ensure previous models are accessible.</li>
+        <li><strong>Implementation:</strong> Inside <code>mlops_train.py</code>, the model is officially registered to the MLflow Model Registry as <code>AtRiskClassifier</code> (Version 1).</li>
+        <li><strong>Validation:</strong> MLflow strictly archives each version. As new training scripts are triggered, new iterations are saved to the persistent <code>mlruns/</code> registry to ensure rollback capability.</li>
+    </ul>
+
+    <h3>✅ 4. Model Serving API (FastAPI)</h3>
+    <ul>
+        <li><strong>Objective:</strong> Build a functional prediction API exposing the <code>/predict</code> endpoint.</li>
+        <li><strong>Implementation:</strong> Authored <code>mlops_api.py</code> utilizing the modern <strong>FastAPI</strong> framework.</li>
+        <li><strong>Validation:</strong> The service launches on port 8000 and successfully takes dynamically-typed JSON structures (Members, Leaders, Participation) and outputs the classification directly from the <code>models/at_risk_model.pkl</code> artifact.</li>
+    </ul>
+
+    <h3>✅ 5. Containerization (Included Docker & Docker Compose)</h3>
+    <ul>
+        <li><strong>Objective:</strong> Ensure the application safely runs inside Docker.</li>
+        <li><strong>Implementation:</strong> The architecture was heavily isolated into two specific Dockerfiles:
+            <br>• <code>Dockerfile.api</code>: Encapsulating the FastAPI prediction server.
+            <br>• <code>Dockerfile.webapp</code>: Encapsulating the main Flask dashboard ecosystem.
+        </li>
+        <li><strong>Validation:</strong> Built a massive <code>docker-compose.yml</code> orchestrator. We solved a critical system-file-lock exception in the Windows background by configuring a highly specific <code>.dockerignore</code> file. The environment now boots cleanly mapped to <code>localhost:5000</code> via <code>docker-compose up -d --build</code>.</li>
+    </ul>
+
+    <h3>✅ 6. Code Quality</h3>
+    <ul>
+        <li><strong>Objective:</strong> Clean, modular, well-commented execution.</li>
+        <li><strong>Implementation:</strong> We definitively decoupled the monolithic Flask app into segmented zones. Training logic is safely relegated to <code>mlops_train.py</code>, API exposure belongs strictly to <code>mlops_api.py</code>, and the legacy UI is preserved in the main app.</li>
+    </ul>
+
+    <h3>✅ 7. Web App Integration (Frontend to API)</h3>
+    <ul>
+        <li><strong>Objective:</strong> Establish the End-to-End flow: UI → API → Model → Result.</li>
+        <li><strong>Implementation:</strong> Expanded <code>ml_app/app.py</code> by adding an internal <code>/mlops/predict</code> route that elegantly proxies requests to the external FastAPI instance mapping.</li>
+        <li><strong>Validation:</strong> We modified the HTML frontend (<code>index.html</code>) by integrating a brand new <strong>Objective 13 (🚀 MLOps API Test)</strong> module. You can visually input variables in the browser, triggering the complete REST cycle to return the risk classification over the network flawlessly.</li>
+    </ul>
+
+    <hr>
+    
+    <div class="footer">DataMinds.tn</div>
+
+</body>
+</html>

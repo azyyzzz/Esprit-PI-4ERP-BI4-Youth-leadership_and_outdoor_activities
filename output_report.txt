@@ -1,0 +1,29 @@
+================ SLOWEST VISUALS ================
+1. unit_code, NbMembres, annee et nb_activites (pythonVisual): Max 3750.0 ms, Avg 3375.0 ms, Count 2
+2. unit_code, promised_amount_TND et Received_amount_TND (pythonVisual): Max 2809.0 ms, Avg -888403785158.0 ms, Count 2
+3. Carte (cardVisual): Max 2791.0 ms, Avg 954.2 ms, Count 20
+4. التاريخ (slicer): Max 2744.0 ms, Avg 840.4 ms, Count 5
+5. إجمالي عدد المخيمات  (gauge): Max 2743.0 ms, Avg 1626.0 ms, Count 2
+6. عدد المشاركين حسب الموسم (barChart): Max 2743.0 ms, Avg 1626.5 ms, Count 2
+7. عدد المشاركين لكل مخيم (clusteredColumnChart): Max 2742.0 ms, Avg 1626.0 ms, Count 2
+8. unit_code, Nb_Participants, nb_activites et NbMembres (pythonVisual): Max 2737.0 ms, Avg -888403781984.0 ms, Count 2
+9. نوع النَشَاط (SmartFilterBySQLBI1458262140625): Max 2688.0 ms, Avg 877.2 ms, Count 5
+10. تصنيف المخيمات حسب المدة (waffle_chart_visiochart_8c1a6a012eec472d899f79bf867dr059): Max 2668.0 ms, Avg 1059.7 ms, Count 3
+
+================ SLOWEST DAX QUERIES ================
+1. Dauer Max 84.0 ms, Count 4
+   Query Extract: DEFINE 	VAR __SQDS0FilterTable =  		FILTER( 			KEEPFILTERS(VALUES('DIMDate'[saison])), 			NOT('D...
+2. Dauer Max 68.0 ms, Count 21
+   Query Extract: DEFINE 	VAR __DS0FilterTable =  		FILTER( 			KEEPFILTERS(VALUES('DIMDate'[saison])), 			NOT('DIM...
+3. Dauer Max 66.0 ms, Count 35
+   Query Extract: DEFINE 	VAR __DS0FilterTable =  		FILTER( 			KEEPFILTERS(VALUES('DIMDate'[full_date])), 			AND(...
+4. Dauer Max 29.0 ms, Count 1
+   Query Extract: DEFINE 	VAR __SQDS0FilterTable =  		FILTER( 			KEEPFILTERS(VALUES('DIMDate'[full_date])), 			AND...
+5. Dauer Max 23.0 ms, Count 23
+   Query Extract: DEFINE VAR __DS0FilterTable =  	FILTER( 		KEEPFILTERS(VALUES('DIMDate'[saison])), 		NOT('DIMDate'...
+6. Dauer Max 21.0 ms, Count 1
+   Query Extract: DEFINE 	VAR __DS0FilterTable =  		TREATAS( 			{"Activités environnementales/sociales", 				"Évén...
+7. Dauer Max 19.0 ms, Count 2
+   Query Extract: DEFINE 	VAR __DS0FilterTable =  		TREATAS( 			{"Camp de printemps", 				"Camp d'été", 				"Camp...
+8. Dauer Max 18.0 ms, Count 1
+   Query Extract: DEFINE 	VAR __DS0FilterTable =  		TREATAS({"2024", 			"2025"}, 'DIMDate'[annee])  	VAR __DS0Fil...

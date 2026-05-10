@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/MSI/Desktop/wetransfer_scouts_2026-02-28_1339/Scouts/mlruns/741762050468076685/581bc4710dc9476a9115fc6cc8181aeb/artifacts
+end_time: 1778365370195
+entry_point_name: ''
+experiment_id: '741762050468076685'
+lifecycle_stage: active
+run_id: 581bc4710dc9476a9115fc6cc8181aeb
+run_name: efficient-bird-153
+run_uuid: 581bc4710dc9476a9115fc6cc8181aeb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778365356239
+status: 3
+tags: []
+user_id: MSI
