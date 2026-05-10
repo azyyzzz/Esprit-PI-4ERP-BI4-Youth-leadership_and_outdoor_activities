@@ -906,6 +906,40 @@
       background: var(--red);
       border-color: var(--red);
     }
+    .scout-select, .scout-input {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      width: 100%;
+      margin-top: 10px;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.3s;
+    }
+    .scout-input:focus {
+      border-color: var(--gold);
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .scout-select option {
+      background: var(--green-dark);
+      color: white;
+    }
+    .login-form-inner {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: left;
+    }
+    .login-form-inner label {
+      font-size: 10px;
+      text-transform: uppercase;
+      opacity: 0.6;
+      display: block;
+      margin-bottom: -5px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 
@@ -919,23 +953,66 @@
       <p class="login-subtitle">نظام دعم القرار للكشافة التونسية — Role Selection</p>
       
       <div class="role-grid">
-        <div class="role-card" onclick="selectRole('admin')">
+        <!-- Admin Card -->
+        <div class="role-card" id="card_admin">
           <div class="role-tag">FULL ACCESS</div>
           <i class="fa fa-user-shield"></i>
           <h3>القائد العام</h3>
           <p>General Director<br>Strategic Oversight & MLOps</p>
+          
+          <div id="form_admin" class="login-form-inner" style="display:none;">
+            <label>Username</label>
+            <input type="text" id="user_admin" class="scout-input" placeholder="admin">
+            <label>Password</label>
+            <input type="password" id="pass_admin" class="scout-input" placeholder="••••••••">
+            <button class="btn-scout" style="width:100%; margin-top:15px; background:var(--gold); border:none;" onclick="handleLogin('admin')">Login as Admin</button>
+          </div>
+          <button class="btn-scout" id="btn_admin" style="width:100%; margin-top:10px;" onclick="showForm('admin')">Select Role</button>
         </div>
-        <div class="role-card" onclick="selectRole('finance')">
+
+        <!-- Finance Card -->
+        <div class="role-card" id="card_finance">
           <div class="role-tag">AUDIT</div>
           <i class="fa fa-hand-holding-dollar"></i>
           <h3>المسؤول المالي</h3>
           <p>Financial Manager<br>Budgeting & Anomaly Analysis</p>
+
+          <div id="form_finance" class="login-form-inner" style="display:none;">
+            <label>Username</label>
+            <input type="text" id="user_finance" class="scout-input" placeholder="finance">
+            <label>Password</label>
+            <input type="password" id="pass_finance" class="scout-input" placeholder="••••••••">
+            <button class="btn-scout" style="width:100%; margin-top:15px; background:var(--gold); border:none;" onclick="handleLogin('finance')">Login to Finance</button>
+          </div>
+          <button class="btn-scout" id="btn_finance" style="width:100%; margin-top:10px;" onclick="showForm('finance')">Select Role</button>
         </div>
-        <div class="role-card" onclick="selectRole('unit')">
+
+        <!-- Unit Leader Card -->
+        <div class="role-card" id="card_unit">
           <div class="role-tag">OPERATIONS</div>
           <i class="fa fa-users-rectangle"></i>
           <h3>قائد الوحدة</h3>
           <p>Unit Leader<br>Membership & Engagement</p>
+
+          <div id="form_unit" class="login-form-inner" style="display:none;">
+            <label>Username</label>
+            <input type="text" id="user_unit" class="scout-input" placeholder="unit">
+            <label>Password</label>
+            <input type="password" id="pass_unit" class="scout-input" placeholder="••••••••">
+            <label>Unit to Visit</label>
+            <select id="unitDropdown" class="scout-select">
+              <option value="">Choose your unit...</option>
+              <option value="ASFR">ASFR (أصفر)</option>
+              <option value="CHBL">CHBL (شبل)</option>
+              <option value="CHFA">CHFA (شفاء)</option>
+              <option value="JWLA">JWLA (جولة)</option>
+              <option value="LILT">LILT (ليلت)</option>
+              <option value="RCHT">RCHT (رشت)</option>
+              <option value="ZHRT">ZHRT (زهرت)</option>
+            </select>
+            <button class="btn-scout" style="width:100%; margin-top:15px; background:var(--gold); border:none;" onclick="handleLogin('unit')">Login to Unit</button>
+          </div>
+          <button class="btn-scout" id="btn_unit" style="width:100%; margin-top:10px;" onclick="showForm('unit')">Select Role</button>
         </div>
       </div>
     </div>
@@ -1103,6 +1180,7 @@
     function currency(v) { return Number(v).toLocaleString('fr-TN') + ' TND'; }
     function pct(v) { return (v * 100).toFixed(1) + '%'; }
     function setActive(el) {
+      if (!el) return;
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       el.classList.add('active');
     }
@@ -1228,7 +1306,6 @@
             <div class="card-subtitle">Live Power BI analytics for Scout Group</div>
           </div>
           <div class="card-body" style="padding:0">
-            <!-- Updated URL to reportEmbed to allow embedding in iframe -->
             <iframe src="https://app.powerbi.com/reportEmbed?reportId=fa0d9fd1-e7c6-43b0-a2ad-8f7165ba16bb&groupId=me&autoAuth=true" style="width:100%;height:82vh;border:none;"></iframe>
           </div>
         </div>
@@ -1240,7 +1317,33 @@
       currentObj = n; setActive(navEl); loading();
       document.getElementById('pageTitle').textContent = objTitles[n] || '';
       document.getElementById('kpiCurrent').textContent = n;
-      const d = await (await fetch(`/api/obj/${n}`)).json();
+      
+      const r = await fetch(`/api/obj/${n}`);
+      let d = await r.json();
+
+      // --- Filter by unit if the role is 'unit' ---
+      const role = localStorage.getItem('scout_role');
+      const unit = localStorage.getItem('scout_unit');
+      if (role === 'unit' && unit) {
+        if (d.sample) d.sample = d.sample.filter(x => (x.unit || '').toUpperCase() === unit.toUpperCase());
+        if (d.results && Array.isArray(d.results)) d.results = d.results.filter(x => (x.unit || '').toUpperCase() === unit.toUpperCase());
+        if (d.anomalies) d.anomalies = d.anomalies.filter(x => (x.unit || '').toUpperCase() === unit.toUpperCase());
+        if (d.scores) d.scores = d.scores.filter(x => (x.unit || '').toUpperCase() === unit.toUpperCase());
+        if (d.at_risk_units) d.at_risk_units = d.at_risk_units.filter(x => (x.unit || '').toUpperCase() === unit.toUpperCase());
+        
+        // Handle scenario analysis / budget charts
+        if (d.labels) {
+          const idx = d.labels.findIndex(l => l.toUpperCase() === unit.toUpperCase());
+          if (idx !== -1) {
+            d.labels = [d.labels[idx]];
+            if (d.budgets) d.budgets = [d.budgets[idx]];
+          } else {
+            d.labels = [];
+            if (d.budgets) d.budgets = [];
+          }
+        }
+      }
+
       const el = document.getElementById('mainContent');
 
       if (n === 1) {
@@ -1270,87 +1373,62 @@
           </div>
         </div>
       </div>`;
-        setTimeout(() => {
-          const labels = d.sample.map(s => s.unit);
-          const actual = d.sample.map(s => s.actual * 100);
-          const predicted = d.sample.map(s => s.predicted * 100);
-          renderChart('bar', labels, [
-            { label: 'Actual (%)', data: actual, backgroundColor: '#1e4d2b' },
-            { label: 'Predicted (%)', data: predicted, backgroundColor: '#b5860d' }
-          ]);
-        }, 100);
+        renderChart('line', d.sample.map(s => s.unit), [
+          { label: 'Actual Rate', data: d.sample.map(s => s.actual), borderColor: '#2e7d32', backgroundColor: 'rgba(46,125,50,0.1)', fill: true, tension: 0.3 },
+          { label: 'Predicted Rate', data: d.sample.map(s => s.predicted), borderColor: '#f9a825', borderDash: [5, 5], tension: 0.3 }
+        ]);
       }
       else if (n === 3) {
         el.innerHTML = `
-      <div class="metric-row">
-        <div class="metric"><div class="metric-val">${d.rmse.toFixed(0)}</div><div class="metric-lbl">RMSE (TND)</div></div>
-        <div class="metric gold-m"><div class="metric-val">RF</div><div class="metric-lbl">Budget Estimator</div></div>
-      </div>
-      <div class="card"><div class="card-header gold-h"><div class="card-title">💰 Budget Forecast Per Unit</div><div class="card-subtitle">Allocated vs Predicted vs Consumed</div></div>
-      <div class="card-body">${renderTable(['Unit', 'Allocated', 'Predicted', 'Consumed'], d.sample,
-          s => `<td><b>${s.unit}</b></td><td>${currency(s.allocated)}</td><td><b style="color:var(--green-dark)">${currency(s.predicted)}</b></td><td>${currency(s.consumed)}</td>`)}</div></div>`;
+      <div class="card"><div class="card-header"><div class="card-title">💰 Budget Estimation (Required vs Available)</div><div class="card-subtitle">Based on participation forecast & historical costs</div></div>
+      <div class="card-body">
+        <div style="background:var(--cream);padding:15px;border-radius:8px;border:1px solid var(--beige3);margin-bottom:15px">
+          <canvas id="objChart" style="max-height:300px"></canvas>
+        </div>
+        ${renderTable(['Unit', 'Allocated historical', 'Required Predicted', 'Gap'], d.sample,
+          s => `<td><b>${s.unit}</b></td><td>${currency(s.allocated)}</td><td><b style="color:var(--green-dark)">${currency(s.predicted)}</b></td>
+              <td><span class="badge ${s.predicted > s.allocated ? 'low' : 'high'}">${currency(s.predicted - s.allocated)}</span></td>`)}
+      </div></div>`;
+        renderChart('bar', d.sample.map(s => s.unit), [
+          { label: 'Allocated (Hist.)', data: d.sample.map(s => s.allocated), backgroundColor: '#a5d6a7' },
+          { label: 'Required (Pred.)', data: d.sample.map(s => s.predicted), backgroundColor: '#2e7d32' }
+        ]);
       }
       else if (n === 4) {
         el.innerHTML = `
-      ${d.anomalies.length > 0 ? `<div class="alert-banner"><span class="a-icon">⚠️</span><span class="a-msg">Financial anomalies detected requiring investigation</span><span class="a-count">${d.anomalies.length} records</span></div>` : ''}
       <div class="metric-row">
-        <div class="metric red-m"><div class="metric-val">${d.anomalies.length}</div><div class="metric-lbl">Anomalies Detected</div></div>
-        <div class="metric gold-m"><div class="metric-val">5%</div><div class="metric-lbl">Contamination Rate</div></div>
+        <div class="metric"><div class="metric-val">IF</div><div class="metric-lbl">Isolation Forest</div></div>
+        <div class="metric gold-m"><div class="metric-val">${d.anomalies.length}</div><div class="metric-lbl">Flagged Units</div></div>
       </div>
-      <div class="card"><div class="card-header red-h"><div class="card-title">🚨 Abnormal Budget Consumption</div><div class="card-subtitle">Isolation Forest – Anomaly Detection</div></div>
-      <div class="card-body">${d.anomalies.length ?
-            renderTable(['Unit', 'Allocated', 'Consumed', 'Ratio', 'Status'], d.anomalies,
-              a => `<td><b>${a.unit}</b></td><td>${currency(a.allocated)}</td><td>${currency(a.consumed)}</td><td>${a.ratio.toFixed(2)}x</td><td><span class="badge bad">${a.status}</span></td>`)
-            : '<div class="alert-entry ok"><span class="ae-icon">✅</span><div class="ae-txt"><b>No anomalies detected.</b></div></div>'}</div></div>`;
+      <div class="card"><div class="card-header red-h"><div class="card-title">⚠️ Unusual Financial Patterns</div><div class="card-subtitle">Detection of outliers in spending vs participants</div></div>
+      <div class="card-body">${renderTable(['Unit', 'Ratio', 'Reason', 'Risk Score'], d.anomalies,
+          s => `<td><b>${s.unit}</b></td><td>${s.ratio.toFixed(2)}x</td><td>${s.status}</td><td><b>${(Math.abs(s.score) * 100).toFixed(1)}%</b></td>`)}</div></div>`;
       }
       else if (n === 5) {
-        const dist = d.distribution || {};
-        const total = Object.values(dist).reduce((a, b) => a + b, 0) || 1;
         el.innerHTML = `
       <div class="metric-row">
-        <div class="metric"><div class="metric-val">${(d.accuracy * 100).toFixed(1)}%</div><div class="metric-lbl">Classification Accuracy</div></div>
-        <div class="metric gold-m"><div class="metric-val">${total}</div><div class="metric-lbl">Total Unit Records</div></div>
+        <div class="metric gold-m"><div class="metric-val">${(d.accuracy * 100).toFixed(0)}%</div><div class="metric-lbl">Model Accuracy</div></div>
+        <div class="metric"><div class="metric-val">RFC</div><div class="metric-lbl">Random Forest Classifier</div></div>
       </div>
-      <div class="card"><div class="card-header"><div class="card-title">🏅 Performance Distribution</div><div class="card-subtitle">Units classified as Low / Medium / High</div></div>
-      <div class="card-body">
-        ${Object.entries(dist).map(([k, v]) => `
-          <div style="margin-bottom:14px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <span class="badge ${k.toLowerCase()}">${k}</span>
-              <span style="font-size:12px;color:var(--text-mid)">${v} units (${(v / total * 100).toFixed(0)}%)</span>
-            </div>
-            <div class="progress-wrap"><div class="progress-fill ${k === 'High' ? 'pf-green' : k === 'Medium' ? 'pf-gold' : 'pf-red'}" style="width:${v / Math.max(...Object.values(dist)) * 100}%"></div></div>
-          </div>`).join('')}
-      </div></div>
-      <div class="card"><div class="card-header gold-h"><div class="card-title">📋 Unit Performance Breakdown</div><div class="card-subtitle">Detailed Classification & Metrics</div></div>
-      <div class="card-body">
-        ${renderTable(['Unit', 'Members', 'Participation', 'Tier'], d.results,
-          r => `<td><b>${r.unit}</b></td><td>${r.members}</td><td>${(r.participation * 100).toFixed(1)}%</td><td><span class="badge ${r.tier.toLowerCase()}">${r.tier}</span></td>`)}
-      </div></div>`;
+      <div class="card"><div class="card-header gold-h"><div class="card-title">🏅 Unit Performance Classification</div><div class="card-subtitle">Performance tiers based on engagement & growth</div></div>
+      <div class="card-body">${renderTable(['Unit', 'Members', 'Participation', 'Current Tier'], d.results,
+          s => `<td><b>${s.unit}</b></td><td>${s.members}</td><td>${pct(s.participation)}</td><td><span class="badge ${s.tier.toLowerCase()}">${s.tier}</span></td>`)}</div></div>`;
       }
       else if (n === 6) {
         el.innerHTML = `
-      ${d.n_at_risk > 0 ? `<div class="alert-banner"><span class="a-icon">🔴</span><span class="a-msg">At-risk units detected – intervention recommended</span><span class="a-count">${d.n_at_risk} units</span></div>` : ''}
-      <div class="metric-row">
-        <div class="metric red-m"><div class="metric-val">${d.n_at_risk}</div><div class="metric-lbl">At-Risk Units</div></div>
-      </div>
-      <div class="card"><div class="card-header red-h"><div class="card-title">🔴 Units Requiring Intervention</div><div class="card-subtitle">Random Forest Classifier – At-Risk Detection</div></div>
-      <div class="card-body">${d.at_risk_units.length ?
-            renderTable(['Unit', 'Members', 'Participation', 'Class'], d.at_risk_units,
-              u => `<td><b>${u.unit}</b></td><td>${u.members.toFixed(0)}</td><td>${pct(u.participation)}</td><td><span class="badge low">${u.class}</span></td>`)
-            : '<div class="alert-entry ok"><span class="ae-icon">✅</span><div>No at-risk units found.</div></div>'}</div></div>`;
+      <div class="card"><div class="card-header red-h"><div class="card-title">🛑 At-Risk Units Identification</div><div class="card-subtitle">Priority intervention list for struggling units</div></div>
+      <div class="card-body">${renderTable(['Unit', 'Current Status', 'Risk Class'], d.at_risk_units,
+          s => `<td><b>${s.unit}</b></td><td><span class="badge low">CRITICAL</span></td><td><b>${s.class}</b></td>`)}</div></div>`;
       }
       else if (n === 7) {
-        const colors = ['var(--green-dark)', 'var(--gold)', 'var(--red-light)'];
         el.innerHTML = `
-      <div class="card"><div class="card-header"><div class="card-title">🔵 Behavioral Clusters (K-Means, K=3)</div></div>
+      <div class="card"><div class="card-header gold-h"><div class="card-title">🔵 Behavioral Segmentation (K-Means)</div><div class="card-subtitle">Units grouped by engagement patterns</div></div>
       <div class="card-body">
-        ${(d.clusters || []).map((c, i) => `
+        <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));gap:15px">
+          ${d.clusters.map((c, i) => `
           <div class="cluster-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-              <h4 style="color:${colors[i]}"><i class="fa fa-circle" style="font-size:10px;margin-right:6px"></i>${c.label}</h4>
-              <span style="font-size:12px;color:var(--text-mid)">${c.count} unit records</span>
-            </div>
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px">${c.label}</div>
+            <div style="font-size:24px;font-weight:800;color:var(--green-dark);margin-bottom:4px">${c.count} <small style="font-size:12px;font-weight:400;color:var(--text-mid)">units</small></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px">
               <div><span style="color:var(--text-light)">Avg Members:</span> <b>${c.avg_members.toFixed(1)}</b></div>
               <div><span style="color:var(--text-light)">Avg Participation:</span> <b>${pct(c.avg_participation)}</b></div>
@@ -1359,6 +1437,7 @@
               <div class="progress-wrap"><div class="progress-fill ${i === 0 ? 'pf-green' : i === 1 ? 'pf-gold' : 'pf-red'}" style="width:${c.count / (d.clusters.reduce((a, x) => a + x.count, 0)) * 100}%"></div></div>
             </div>
           </div>`).join('')}
+        </div>
       </div></div>`;
       }
       else if (n === 8) {
@@ -1493,8 +1572,46 @@
         `<div class="recommendation ${colorMap[d.color] || 'rec-orange'}">${d.recommendation}</div>`;
     }
 
-    function selectRole(role) {
+    function showForm(role) {
+      // Hide all forms
+      document.querySelectorAll('.login-form-inner').forEach(f => f.style.display = 'none');
+      document.querySelectorAll('.role-card .btn-scout').forEach(b => b.style.display = 'block');
+      
+      // Show target form
+      document.getElementById('form_' + role).style.display = 'block';
+      document.getElementById('btn_' + role).style.display = 'none';
+    }
+
+    function handleLogin(role) {
+      const user = document.getElementById('user_' + role).value;
+      const pass = document.getElementById('pass_' + role).value;
+      
+      const creds = {
+        'admin': { u: 'admin', p: 'scout2026' },
+        'finance': { u: 'finance', p: 'finance2026' },
+        'unit': { u: 'unit', p: 'unit2026' }
+      };
+
+      if (user === creds[role].u && pass === creds[role].p) {
+        if (role === 'unit') {
+          const unit = document.getElementById('unitDropdown').value;
+          if (!unit) {
+            alert('Please select a unit to visit!');
+            return;
+          }
+          selectRole('unit', unit);
+        } else {
+          selectRole(role);
+        }
+      } else {
+        alert('Invalid credentials for ' + role);
+      }
+    }
+
+    function selectRole(role, unit = null) {
       localStorage.setItem('scout_role', role);
+      if (unit) localStorage.setItem('scout_unit', unit);
+      
       document.getElementById('loginOverlay').style.display = 'none';
       document.getElementById('userPill').style.display = 'flex';
       
@@ -1504,7 +1621,10 @@
         'unit': 'قائد الوحدة (Unit Leader)' 
       };
       
-      document.getElementById('userRoleLabel').textContent = roleNames[role];
+      let label = roleNames[role];
+      if (role === 'unit' && unit) label += ` - ${unit}`;
+      
+      document.getElementById('userRoleLabel').textContent = label;
       document.getElementById('roleSubtitle').textContent = roleNames[role].split(' (')[0];
 
       // Filter sidebar
@@ -1525,13 +1645,15 @@
 
     function logout() {
       localStorage.removeItem('scout_role');
+      localStorage.removeItem('scout_unit');
       location.reload();
     }
 
     // Auto-login if role exists
     window.addEventListener('DOMContentLoaded', () => {
-      const saved = localStorage.getItem('scout_role');
-      if (saved) selectRole(saved);
+      const savedRole = localStorage.getItem('scout_role');
+      const savedUnit = localStorage.getItem('scout_unit');
+      if (savedRole) selectRole(savedRole, savedUnit);
     });
 
     checkStatus();
