@@ -878,6 +878,10 @@
         <span class="icon"><i class="fa fa-chart-area"></i></span> Grafana Dashboard
         <span class="nav-badge">OBS</span>
       </div>
+      <div class="nav-item link-item" onclick="loadBiPanel(this)">
+        <span class="icon"><i class="fa fa-chart-pie"></i></span> BI Dashboard
+        <span class="nav-badge">PBI</span>
+      </div>
     </aside>
 
     <!-- ══════════════════════ MAIN ════════════════════════════════ -->
@@ -975,32 +979,31 @@
     async function loadMlopsPanel(navEl) {
       setActive(navEl);
       currentObj = 13;
-      document.getElementById('pageTitle').textContent = '⚙️ MLOps API';
+      document.getElementById('pageTitle').textContent = '⚙️ MLOps API — Test Center';
       document.getElementById('kpiCurrent').textContent = 'M';
       document.getElementById('mainContent').innerHTML = `
         <div class="card">
           <div class="card-header gold-h">
-            <div class="card-title">🧪 Test At-Risk Prediction</div>
-            <div class="card-subtitle">Run MLOps model test from inside dashboard</div>
+            <div class="card-title">🧪 Manual At-Risk Prediction</div>
+            <div class="card-subtitle">Test unit risk by entering custom parameters</div>
           </div>
           <div class="card-body">
             <div class="form-row">
               <div class="form-group">
                 <label>Unit Code</label>
-                <input type="text" id="mlops_unit" value="CHBL" />
+                <input type="text" id="mlops_unit" placeholder="E.g. CHBL" value="CHBL" />
+              </div>
+              <div class="form-group">
+                <label>Total Members</label>
+                <input type="number" id="mlops_members" placeholder="How many members?" value="40" />
+              </div>
+              <div class="form-group">
+                <label>Participation Rate (0 to 1)</label>
+                <input type="number" id="mlops_participation" placeholder="E.g. 0.65" step="0.05" min="0" max="1" value="0.65" />
               </div>
             </div>
-            <button class="btn-scout" onclick="testMlopsInline()"><i class="fa fa-play"></i> Test MLOps</button>
-            <div id="mlops_result" style="margin-top:14px"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">📘 MLOps API Docs (Embedded)</div>
-            <div class="card-subtitle">Live FastAPI OpenAPI docs on port 8005</div>
-          </div>
-          <div class="card-body" style="padding:0">
-            <iframe src="http://127.0.0.1:8005/docs" style="width:100%;height:72vh;border:none;"></iframe>
+            <button class="btn-scout" onclick="testMlopsInline()"><i class="fa fa-play"></i> Run Prediction</button>
+            <div id="mlops_result" style="margin-top:20px"></div>
           </div>
         </div>
       `;
@@ -1008,13 +1011,20 @@
 
     async function testMlopsInline() {
       const unit = (document.getElementById('mlops_unit')?.value || '').trim().toUpperCase();
+      const members = parseFloat(document.getElementById('mlops_members')?.value || 0);
+      const participation = parseFloat(document.getElementById('mlops_participation')?.value || 0);
+      
       const target = document.getElementById('mlops_result');
-      target.innerHTML = '<div class="loading" style="padding:12px"><div class="spinner"></div>Testing MLOps...</div>';
+      target.innerHTML = '<div class="loading" style="padding:12px"><div class="spinner"></div>Running prediction...</div>';
       try {
         const r = await fetch('/mlops/predict', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ unit_code: unit })
+          body: JSON.stringify({ 
+            unit_code: unit,
+            members: members,
+            participation_rate: participation
+          })
         });
         const d = await r.json();
         const risk = !!d.At_Risk;
@@ -1024,12 +1034,13 @@
             <div class="ae-txt">
               <b>${risk ? 'Unit is At Risk' : 'Unit is Not At Risk'}</b><br>
               ${d.Message || ''}<br>
-              Confidence: <b>${typeof d.Confidence === 'number' ? (d.Confidence * 100).toFixed(1) + '%' : 'N/A'}</b>
+              Confidence Score: <b>${typeof d.Confidence === 'number' ? (d.Confidence * 100).toFixed(1) + '%' : 'N/A'}</b><br>
+              <small style="color:#777">Input received: ${members} members, ${(participation * 100).toFixed(0)}% participation</small>
             </div>
           </div>
         `;
       } catch (e) {
-        target.innerHTML = `<div class="alert-entry high"><span class="ae-icon">❌</span><div class="ae-txt"><b>MLOps test failed.</b><br>${e}</div></div>`;
+        target.innerHTML = `<div class="alert-entry high"><span class="ae-icon">❌</span><div class="ae-txt"><b>MLOps prediction failed.</b><br>${e}</div></div>`;
       }
     }
 
@@ -1046,6 +1057,25 @@
           </div>
           <div class="card-body" style="padding:0">
             <iframe src="http://127.0.0.1:3000" style="width:100%;height:78vh;border:none;"></iframe>
+          </div>
+        </div>
+      `;
+    }
+
+    function loadBiPanel(navEl) {
+      setActive(navEl);
+      currentObj = 15;
+      document.getElementById('pageTitle').textContent = '📊 Power BI Scout Dashboard';
+      document.getElementById('kpiCurrent').textContent = 'BI';
+      document.getElementById('mainContent').innerHTML = `
+        <div class="card">
+          <div class="card-header gold-h">
+            <div class="card-title">📉 Power BI Report (Embedded)</div>
+            <div class="card-subtitle">Live Power BI analytics for Scout Group</div>
+          </div>
+          <div class="card-body" style="padding:0">
+            <!-- Updated URL to reportEmbed to allow embedding in iframe -->
+            <iframe src="https://app.powerbi.com/reportEmbed?reportId=fa0d9fd1-e7c6-43b0-a2ad-8f7165ba16bb&groupId=me&autoAuth=true" style="width:100%;height:82vh;border:none;"></iframe>
           </div>
         </div>
       `;

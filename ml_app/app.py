@@ -953,23 +953,39 @@ If a question is outside the scope of this dashboard, politely say so.
 def mlops_proxy():
     body = request.json or {}
     unit = str(body.get('unit_code', '')).strip().upper()
+    
+    # Check for manual overrides from the dashboard form
+    manual_members = body.get('members')
+    manual_participation = body.get('participation_rate')
+
+    # Default payload
     payload = {'Nb_Membres': 80.0, 'Nb_Chefs': 6.0, 'Participation_Rate': 0.55}
 
-    m_info = models.get('membership') or {}
-    mem_df = m_info.get('members')
-    if mem_df is not None and not getattr(mem_df, 'empty', True) and unit:
-        try:
-            code_series = mem_df['Code_Unite'].astype(str).str.upper()
-            sub = mem_df.loc[code_series == unit]
-            if not sub.empty:
-                if 'annee' in sub.columns:
-                    sub = sub.sort_values('annee', ascending=False)
-                row = sub.iloc[0]
-                payload['Nb_Membres'] = float(row.get('Nb_Membres', payload['Nb_Membres']))
-                payload['Nb_Chefs'] = float(row.get('Nb_Chefs', payload['Nb_Chefs']))
-                payload['Participation_Rate'] = float(row.get('Participation_Rate', payload['Participation_Rate']))
-        except Exception as ex:
-            print(f'WARN mlops_proxy unit lookup: {ex}')
+    if manual_members is not None:
+        payload['Nb_Membres'] = float(manual_members)
+        # Heuristic: 1 chef per 10 members + 1
+        payload['Nb_Chefs'] = float(int(payload['Nb_Membres'] / 10) + 1)
+    
+    if manual_participation is not None:
+        payload['Participation_Rate'] = float(manual_participation)
+
+    # If manual values weren't provided but a unit was, try to look up unit data
+    if manual_members is None and manual_participation is None and unit:
+        m_info = models.get('membership') or {}
+        mem_df = m_info.get('members')
+        if mem_df is not None and not getattr(mem_df, 'empty', True):
+            try:
+                code_series = mem_df['Code_Unite'].astype(str).str.upper()
+                sub = mem_df.loc[code_series == unit]
+                if not sub.empty:
+                    if 'annee' in sub.columns:
+                        sub = sub.sort_values('annee', ascending=False)
+                    row = sub.iloc[0]
+                    payload['Nb_Membres'] = float(row.get('Nb_Membres', payload['Nb_Membres']))
+                    payload['Nb_Chefs'] = float(row.get('Nb_Chefs', payload['Nb_Chefs']))
+                    payload['Participation_Rate'] = float(row.get('Participation_Rate', payload['Participation_Rate']))
+            except Exception as ex:
+                print(f'WARN mlops_proxy unit lookup: {ex}')
 
     base = os.environ.get('MLOPS_API_URL', 'http://127.0.0.1:8005').rstrip('/')
     try:
