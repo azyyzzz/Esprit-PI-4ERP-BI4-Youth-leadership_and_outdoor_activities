@@ -789,96 +789,250 @@
       opacity: .8;
       margin-top: 4px;
     }
+    /* ── LOGIN OVERLAY ────────────────────────────────────────── */
+    #loginOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--green-dark), #0a1f12);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: var(--white);
+    }
+
+    .login-box {
+      text-align: center;
+      max-width: 1000px;
+      width: 100%;
+      padding: 0 40px;
+    }
+
+    .login-logo {
+      font-size: 80px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 15px var(--gold));
+    }
+
+    .login-title {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      opacity: 0.7;
+      margin-bottom: 50px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 25px;
+    }
+
+    .role-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 40px 20px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .role-card:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--gold);
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .role-card i {
+      font-size: 50px;
+      margin-bottom: 20px;
+      color: var(--gold-light);
+      transition: transform 0.3s;
+    }
+
+    .role-card:hover i {
+      transform: scale(1.15);
+    }
+
+    .role-card h3 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .role-card p {
+      font-size: 12px;
+      opacity: 0.6;
+      line-height: 1.5;
+    }
+
+    .role-card .role-tag {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 9px;
+      background: var(--gold);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+    }
+
+    .btn-logout {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--white);
+      font-size: 10px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 12px;
+    }
+
+    .btn-logout:hover {
+      background: var(--red);
+      border-color: var(--red);
+    }
   </style>
 </head>
 
 <body>
+
+  <!-- ══════════════════════ LOGIN OVERLAY ══════════════════════════ -->
+  <div id="loginOverlay">
+    <div class="login-box">
+      <div class="login-logo">⚜️</div>
+      <h1 class="login-title">SCOUT INTELLIGENCE HUB</h1>
+      <p class="login-subtitle">نظام دعم القرار للكشافة التونسية — Role Selection</p>
+      
+      <div class="role-grid">
+        <div class="role-card" onclick="selectRole('admin')">
+          <div class="role-tag">FULL ACCESS</div>
+          <i class="fa fa-user-shield"></i>
+          <h3>القائد العام</h3>
+          <p>General Director<br>Strategic Oversight & MLOps</p>
+        </div>
+        <div class="role-card" onclick="selectRole('finance')">
+          <div class="role-tag">AUDIT</div>
+          <i class="fa fa-hand-holding-dollar"></i>
+          <h3>المسؤول المالي</h3>
+          <p>Financial Manager<br>Budgeting & Anomaly Analysis</p>
+        </div>
+        <div class="role-card" onclick="selectRole('unit')">
+          <div class="role-tag">OPERATIONS</div>
+          <i class="fa fa-users-rectangle"></i>
+          <h3>قائد الوحدة</h3>
+          <p>Unit Leader<br>Membership & Engagement</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ══════════════════════ TOP HEADER ══════════════════════════ -->
   <header class="topheader">
     <div class="logo-badge">⚜️</div>
     <div style="flex:1">
       <div class="site-title">Scout Group DSS – ML Intelligence Hub</div>
-      <div class="site-subtitle">نظام دعم القرار للكشافة التونسية</div>
+      <div class="site-subtitle" id="roleSubtitle">Select Role...</div>
     </div>
-    <div class="data-pill" id="dataBadge">
+    <div id="userPill" style="display:none; align-items:center; gap:10px;">
+        <div class="data-pill dw">
+            <div class="dot"></div>
+            <span id="userRoleLabel">Role</span>
+        </div>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+    <div class="data-pill" id="dataBadge" style="margin-left:10px">
       <div class="dot"></div>
-      <span id="dataBadgeLabel">Checking data source…</span>
+      <span id="dataBadgeLabel">Checking...</span>
     </div>
   </header>
 
   <div class="layout">
 
     <!-- ══════════════════════ SIDEBAR ════════════════════════════ -->
-    <aside class="sidebar">
-      <div class="section-label">📊 Predictive Analytics</div>
-      <div class="nav-item active" onclick="loadObj(1,this)">
+    <aside class="sidebar" id="sidebar">
+      <div class="section-label" data-roles="admin,unit">📊 Predictive Analytics</div>
+      <div class="nav-item active" onclick="loadObj(1,this)" data-roles="admin,unit">
         <span class="icon"><i class="fa fa-users"></i></span> Membership Forecasting
         <span class="nav-badge">REG</span>
       </div>
-      <div class="nav-item" onclick="loadObj(2,this)">
+      <div class="nav-item" onclick="loadObj(2,this)" data-roles="admin,unit">
         <span class="icon"><i class="fa fa-chart-line"></i></span> Participation Prediction
         <span class="nav-badge">REG</span>
       </div>
-      <div class="nav-item" onclick="loadObj(3,this)">
+      <div class="nav-item" onclick="loadObj(3,this)" data-roles="admin,finance">
         <span class="icon"><i class="fa fa-coins"></i></span> Budget Estimation
         <span class="nav-badge">REG</span>
       </div>
 
-      <div class="section-label">🔴 Classification & Risk</div>
-      <div class="nav-item" onclick="loadObj(4,this)">
+      <div class="section-label" data-roles="admin,unit,finance">🔴 Classification & Risk</div>
+      <div class="nav-item" onclick="loadObj(4,this)" data-roles="admin,finance">
         <span class="icon"><i class="fa fa-triangle-exclamation"></i></span> Anomaly Detection
         <span class="nav-badge">ISO</span>
       </div>
-      <div class="nav-item" onclick="loadObj(5,this)">
+      <div class="nav-item" onclick="loadObj(5,this)" data-roles="admin,unit">
         <span class="icon"><i class="fa fa-medal"></i></span> Unit Performance
         <span class="nav-badge">CLF</span>
       </div>
-      <div class="nav-item" onclick="loadObj(6,this)">
+      <div class="nav-item" onclick="loadObj(6,this)" data-roles="admin,unit">
         <span class="icon"><i class="fa fa-circle-exclamation"></i></span> At-Risk Units
         <span class="nav-badge">CLF</span>
       </div>
 
-      <div class="section-label">💡 Segmentation & Scoring</div>
-      <div class="nav-item" onclick="loadObj(7,this)">
+      <div class="section-label" data-roles="admin,unit">💡 Segmentation & Scoring</div>
+      <div class="nav-item" onclick="loadObj(7,this)" data-roles="admin,unit">
         <span class="icon"><i class="fa fa-object-group"></i></span> Behavioral Segmentation
         <span class="nav-badge">KMN</span>
       </div>
-      <div class="nav-item" onclick="loadObj(8,this)">
+      <div class="nav-item" onclick="loadObj(8,this)" data-roles="admin,unit">
         <span class="icon"><i class="fa fa-star"></i></span> Engagement Scoring
         <span class="nav-badge">SCR</span>
       </div>
 
-      <div class="section-label">🌤 Weather & Adaptation</div>
-      <div class="nav-item" onclick="loadObj(9,this)">
+      <div class="section-label" data-roles="admin,unit">🌤 Weather & Adaptation</div>
+      <div class="nav-item" onclick="loadObj(9,this)" data-roles="admin,unit">
         <span class="icon"><i class="fa fa-cloud-sun"></i></span> Weather Model
         <span class="nav-badge">CLF</span>
       </div>
-      <div class="nav-item" onclick="loadObj(10,this)">
+      <div class="nav-item" onclick="loadObj(10,this)" data-roles="admin,unit">
         <span class="icon"><i class="fa fa-rotate-right"></i></span> Activity Adaptation
         <span class="nav-badge">SIM</span>
       </div>
 
-      <div class="section-label">🔔 Alerts & Decision Support</div>
-      <div class="nav-item" onclick="loadObj(11,this)">
+      <div class="section-label" data-roles="admin,unit,finance">🔔 Alerts & Decision Support</div>
+      <div class="nav-item" onclick="loadObj(11,this)" data-roles="admin,unit,finance">
         <span class="icon"><i class="fa fa-bell"></i></span> Early Warning System
         <span class="nav-badge">RUL</span>
       </div>
-      <div class="nav-item" onclick="loadObj(12,this)">
+      <div class="nav-item" onclick="loadObj(12,this)" data-roles="admin,finance">
         <span class="icon"><i class="fa fa-sliders"></i></span> Scenario Analysis
         <span class="nav-badge">SIM</span>
       </div>
 
-      <div class="section-label">⚙️ MLOps & Monitoring</div>
-      <div class="nav-item link-item" onclick="loadMlopsPanel(this)">
+      <div class="section-label" data-roles="admin">⚙️ MLOps & Monitoring</div>
+      <div class="nav-item link-item" onclick="loadMlopsPanel(this)" data-roles="admin">
         <span class="icon"><i class="fa fa-server"></i></span> MLOps API
         <span class="nav-badge">API</span>
       </div>
-      <div class="nav-item link-item" onclick="loadGrafanaPanel(this)">
+      <div class="nav-item link-item" onclick="loadGrafanaPanel(this)" data-roles="admin">
         <span class="icon"><i class="fa fa-chart-area"></i></span> Grafana Dashboard
         <span class="nav-badge">OBS</span>
       </div>
-      <div class="nav-item link-item" onclick="loadBiPanel(this)">
+      <div class="nav-item link-item" onclick="loadBiPanel(this)" data-roles="admin,finance">
         <span class="icon"><i class="fa fa-chart-pie"></i></span> BI Dashboard
         <span class="nav-badge">PBI</span>
       </div>
@@ -1339,8 +1493,48 @@
         `<div class="recommendation ${colorMap[d.color] || 'rec-orange'}">${d.recommendation}</div>`;
     }
 
+    function selectRole(role) {
+      localStorage.setItem('scout_role', role);
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('userPill').style.display = 'flex';
+      
+      const roleNames = { 
+        'admin': 'القائد العام (Admin)', 
+        'finance': 'المسؤول المالي (Finance)', 
+        'unit': 'قائد الوحدة (Unit Leader)' 
+      };
+      
+      document.getElementById('userRoleLabel').textContent = roleNames[role];
+      document.getElementById('roleSubtitle').textContent = roleNames[role].split(' (')[0];
+
+      // Filter sidebar
+      let firstVisible = null;
+      document.querySelectorAll('#sidebar .nav-item, #sidebar .section-label').forEach(el => {
+        const roles = el.getAttribute('data-roles');
+        if (roles && !roles.split(',').includes(role)) {
+          el.style.display = 'none';
+        } else {
+          el.style.display = 'flex';
+          if (!firstVisible && el.classList.contains('nav-item')) firstVisible = el;
+        }
+      });
+
+      // Load first allowed objective
+      if (firstVisible) firstVisible.click();
+    }
+
+    function logout() {
+      localStorage.removeItem('scout_role');
+      location.reload();
+    }
+
+    // Auto-login if role exists
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('scout_role');
+      if (saved) selectRole(saved);
+    });
+
     checkStatus();
-    loadObj(1, document.querySelector('.nav-item'));
   </script>
 </body>
 
