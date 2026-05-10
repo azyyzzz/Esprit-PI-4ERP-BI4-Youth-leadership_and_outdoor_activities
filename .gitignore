@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+logs/
+mlruns/
+models/
+*.bak

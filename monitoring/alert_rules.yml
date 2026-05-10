@@ -1,0 +1,23 @@
+groups:
+  - name: scouts_mlops_alerts
+    rules:
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(api_request_duration_seconds_bucket[5m])) > 0.5
+        for: 30s
+        labels:
+          severity: warning
+      - alert: HighErrorRate
+        expr: rate(api_errors_total[5m]) / rate(api_requests_total[5m]) > 0.05
+        for: 30s
+        labels:
+          severity: critical
+      - alert: AccuracyDegradation
+        expr: model_accuracy < 0.87
+        for: 15s
+        labels:
+          severity: critical
+      - alert: DataDriftDetected
+        expr: data_drift_score > 0.30
+        for: 15s
+        labels:
+          severity: warning
