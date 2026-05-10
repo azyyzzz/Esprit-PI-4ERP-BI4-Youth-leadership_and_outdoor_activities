@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scout Group DSS – ML Intelligence Hub (v1.4)</title>
+  <title>Scout Group DSS – ML Intelligence Hub</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -53,111 +53,50 @@
 
     /* Main Area */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .topbar { height: 75px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); flex-shrink: 0; }
+    .topbar { height: 75px; background: var(--green-dark); color: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); flex-shrink: 0; }
     .page-title-wrap { display: flex; flex-direction: column; }
-    .page-title { font-size: 20px; font-weight: 700; color: var(--green-dark); }
-    .page-subtitle { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+    .page-title { font-size: 20px; font-weight: 700; color: #fff; }
+    .page-subtitle { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 2px; }
 
     .top-actions { display: flex; align-items: center; gap: 20px; }
-    .status-badge { display: flex; align-items: center; gap: 8px; padding: 8px 15px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .status-badge.dw { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
-    .status-badge.excel { background: #f1f8e9; color: #33691e; border: 1px solid #dcedc8; }
-    .refresh-btn { padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--white); cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
-    .refresh-btn:hover { background: var(--bg-side); border-color: var(--text-light); }
+    .status-badge { display: flex; align-items: center; gap: 8px; padding: 8px 15px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+    .refresh-btn { padding: 8px 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: transparent; color: #fff; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+    .refresh-btn:hover { background: rgba(255,255,255,0.1); }
 
     /* Content Area */
     .content { flex: 1; overflow-y: auto; padding: 30px; }
-    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
-    .kpi-card { background: var(--white); border-radius: 12px; padding: 20px; border: 1px solid var(--border); display: flex; flex-direction: column; position: relative; transition: transform 0.2s; }
-    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-    .kpi-label { font-size: 12px; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 8px; }
-    .kpi-value { font-size: 26px; font-weight: 800; color: var(--green-dark); line-height: 1; }
-    .kpi-sub { font-size: 11px; color: var(--text-light); margin-top: 10px; display: flex; align-items: center; gap: 5px; }
-    .kpi-icon { position: absolute; right: 20px; top: 20px; font-size: 24px; color: var(--border); opacity: 0.5; }
-    
-    .kpi-card.gold { border-left: 4px solid var(--gold); }
-    .kpi-card.amber { border-left: 4px solid #ff8f00; }
-    .kpi-card.red { border-left: 4px solid var(--red); }
-    
     .card { background: var(--white); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); overflow: hidden; }
     .card-header { padding: 18px 25px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
     .card-title { font-size: 16px; font-weight: 700; color: var(--green-dark); }
     .card-subtitle { font-size: 11px; color: var(--text-light); }
     .card-body { padding: 25px; }
-    .gold-h { background: var(--gold-light); }
-    .red-h { background: var(--red-light); }
 
     .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
     .data-table th { text-align: left; padding: 12px 15px; background: var(--bg-side); color: var(--text-mid); font-weight: 700; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
     .data-table td { padding: 12px 15px; border-bottom: 1px solid var(--bg-side); }
-    .data-table tr:last-child td { border-bottom: none; }
-    .data-table tr:hover { background: rgba(0,0,0,0.01); }
 
     .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
     .badge.high { background: #e8f5e9; color: #2e7d32; }
     .badge.medium { background: #fff8e1; color: #f57f17; }
     .badge.low { background: #ffebee; color: #c62828; }
-    .badge.bad { background: #ffebee; color: #c62828; }
 
     .metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; }
     .metric { background: #f1f1f1; padding: 15px; border-radius: 10px; text-align: center; border-bottom: 3px solid var(--border); }
     .metric-val { font-size: 20px; font-weight: 800; color: var(--green-dark); }
     .metric-lbl { font-size: 10px; color: var(--text-mid); text-transform: uppercase; margin-top: 5px; font-weight: 600; }
-    .gold-m { border-color: var(--gold); background: #fffdf7; }
-    .red-m { border-color: var(--red); background: #fff9f9; }
 
-    .btn-scout { padding: 10px 20px; border-radius: 8px; border: none; background: var(--green-dark); color: #fff; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 13px; display: inline-flex; align-items: center; gap: 10px; }
-    .btn-scout:hover { background: var(--green-mid); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-    .btn-gold { background: var(--gold); color: #fff; }
-    .btn-gold:hover { background: var(--gold-dark); }
-
-    .alert-banner { background: var(--red); color: #fff; padding: 12px 25px; border-radius: 10px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(198,40,40,0.3); }
-    .a-msg { font-weight: 700; font-size: 14px; }
-    .a-count { background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 15px; font-size: 11px; }
+    .btn-scout { padding: 10px 20px; border-radius: 8px; border: none; background: var(--green-dark); color: #fff; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 13px; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+    .btn-scout:hover { background: var(--green-mid); transform: translateY(-1px); }
 
     .loading { display: flex; align-items: center; justify-content: center; padding: 100px 0; color: var(--text-mid); font-weight: 600; gap: 15px; }
     .spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top: 3px solid var(--green-mid); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-    .form-group label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 6px; color: var(--text-mid); text-transform: uppercase; }
-    .form-group input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-main); font-size: 14px; outline: none; transition: border 0.2s; }
-    .form-group input:focus { border-color: var(--green-mid); }
-
-    .cluster-card { background: var(--bg-side); border-radius: 10px; padding: 18px; margin-bottom: 12px; border: 1px solid var(--border); }
-    .progress-wrap { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin: 8px 0; }
-    .progress-fill { height: 100%; border-radius: 4px; }
-    .pf-green { background: var(--green-mid); }
-    .pf-gold { background: var(--gold); }
-    .pf-red { background: var(--red); }
-
-    .alert-entry { display: flex; gap: 15px; padding: 15px; background: #fff; border-radius: 8px; border-left: 4px solid #eee; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-    .alert-entry.high { border-left-color: var(--red); }
-    .alert-entry.medium { border-left-color: var(--gold); }
-    .alert-entry.ok { border-left-color: var(--green-mid); }
-
-    /* Floating Chatbot Button */
-    #chat-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 30px; background: var(--green-dark); color: #fff; border: none; box-shadow: 0 5px 25px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; font-size: 24px; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-    #chat-btn:hover { transform: scale(1.1); background: var(--green-mid); }
-
-    #chat-box { position: fixed; bottom: 100px; right: 30px; width: 380px; height: 500px; background: #fff; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 1000; display: none; flex-direction: column; overflow: hidden; border: 1px solid var(--border); }
-    .chat-header { background: var(--green-dark); color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-    .chat-body { flex: 1; overflow-y: auto; padding: 20px; background: #f9f9f9; display: flex; flex-direction: column; gap: 12px; }
-    .chat-footer { padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
-    .chat-input { flex: 1; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--border); outline: none; font-size: 14px; }
-    .msg { max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 13.5px; line-height: 1.4; }
-    .msg.user { align-self: flex-end; background: var(--green-dark); color: #fff; border-bottom-right-radius: 2px; }
-    .msg.bot { align-self: flex-start; background: #eee; color: var(--text-main); border-bottom-left-radius: 2px; }
-    
-    .typing { font-size: 11px; color: var(--text-light); margin-left: 5px; display: none; }
-    .markdown-body ul { padding-left: 18px; margin-top: 5px; }
   </style>
 </head>
 
 <body>
 
   <div class="layout">
-    <!-- SIDEBAR -->
     <div class="sidebar">
       <div class="side-header">
         <div class="side-logo">
@@ -166,7 +105,6 @@
         </div>
         <div class="side-tag">Intelligent Hub</div>
       </div>
-
       <div class="nav">
         <div class="nav-group">
           <span class="nav-label">Predictive Analytics</span>
@@ -183,7 +121,6 @@
             Budget Estimation <span class="badge-nav">REG</span>
           </div>
         </div>
-
         <div class="nav-group">
           <span class="nav-label">Classification & Risk</span>
           <div class="nav-item" onclick="loadObj(4, this)">
@@ -199,7 +136,6 @@
             At-Risk Units <span class="badge-nav">CLF</span>
           </div>
         </div>
-
         <div class="nav-group">
           <span class="nav-label">Segmentation & Scoring</span>
           <div class="nav-item" onclick="loadObj(7, this)">
@@ -211,7 +147,6 @@
             Engagement Scoring <span class="badge-nav">SCR</span>
           </div>
         </div>
-
         <div class="nav-group">
           <span class="nav-label">Weather & Adaptation</span>
           <div class="nav-item" onclick="loadObj(9, this)">
@@ -223,7 +158,6 @@
             Activity Adaptation <span class="badge-nav">SIM</span>
           </div>
         </div>
-
         <div class="nav-group">
           <span class="nav-label">Alerts & Decision Support</span>
           <div class="nav-item" onclick="loadObj(11, this)">
@@ -235,7 +169,6 @@
             Scenario Analysis <span class="badge-nav">SIM</span>
           </div>
         </div>
-
         <div class="nav-group">
           <span class="nav-label">MLOps & Monitoring</span>
           <div class="nav-item" onclick="loadObj(13, this)">
@@ -254,108 +187,40 @@
       </div>
     </div>
 
-    <!-- MAIN -->
     <div class="main">
       <div class="topbar">
         <div class="page-title-wrap">
           <div class="page-title" id="pageTitle">Membership Forecasting</div>
-          <div class="page-subtitle">Historical analysis and future growth prediction</div>
+          <div class="page-subtitle">نظام دعم القرار للكشافة التونسية</div>
         </div>
-
         <div class="top-actions">
-          <div class="status-badge" id="dataBadge">
-            <i class="fa fa-database"></i>
-            <span id="dataBadgeLabel">Connecting...</span>
-          </div>
-          <button class="refresh-btn" onclick="window.location.reload()">
-            <i class="fa fa-arrows-rotate"></i> Refresh
-          </button>
+          <div class="status-badge" id="dataBadgeLabel">Connecting...</div>
+          <button class="refresh-btn" onclick="window.location.reload()"><i class="fa fa-arrows-rotate"></i> Refresh</button>
         </div>
       </div>
 
-      <div style="background:#fffef0;border-bottom:1px solid #eee;padding:12px 30px;display:flex;align-items:center;gap:20px;flex-shrink:0">
-        <img src="https://scouts-tunisiens.tn/wp-content/uploads/2018/10/logo-scout-tunisie.png" style="height:35px" alt="Scouts">
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:800;color:var(--green-dark)">Scout Group DSS – ML Intelligence Hub (v1.4 - FINAL)</div>
-          <div style="font-size:11px;color:var(--text-mid)">نظام دعم القرار للكشافة التونسية · Integrated BI Dashboard</div>
-        </div>
-        <div style="display:flex;gap:10px">
-          <div class="kpi-card" style="padding:10px 18px;flex-direction:row;align-items:center;gap:15px;margin-bottom:0">
-            <div style="color:var(--text-light);font-size:10px;text-transform:uppercase;font-weight:700">Data Source</div>
-            <div class="kpi-value" id="kpiSource" style="font-size:18px">…</div>
-            <div class="kpi-icon" style="top:10px;right:10px;font-size:16px"><i class="fa fa-database"></i></div>
-          </div>
-          <div class="kpi-card gold" style="padding:10px 18px;flex-direction:row;align-items:center;gap:15px;margin-bottom:0">
-            <div style="color:var(--text-light);font-size:10px;text-transform:uppercase;font-weight:700">ML Models</div>
-            <div class="kpi-value" style="font-size:18px">12</div>
-            <div class="kpi-icon" style="top:10px;right:10px;font-size:16px"><i class="fa fa-brain"></i></div>
-          </div>
-          <div class="kpi-card amber" style="padding:10px 18px;flex-direction:row;align-items:center;gap:15px;margin-bottom:0">
-            <div style="color:var(--text-light);font-size:10px;text-transform:uppercase;font-weight:700">Objectives</div>
-            <div class="kpi-value" style="font-size:18px">15</div>
-            <div class="kpi-icon" style="top:10px;right:10px;font-size:16px"><i class="fa fa-list-check"></i></div>
-          </div>
-          <div class="kpi-card red" style="padding:10px 18px;flex-direction:row;align-items:center;gap:15px;margin-bottom:0">
-            <div style="color:var(--text-light);font-size:10px;text-transform:uppercase;font-weight:700">Current Obj</div>
-            <div class="kpi-value" id="kpiCurrent" style="font-size:18px">1</div>
-            <div class="kpi-icon" style="top:10px;right:10px;font-size:16px"><i class="fa fa-bullseye"></i></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Main content area -->
       <div class="content" id="mainContent">
-        <div class="loading">
-          <div class="spinner"></div>Loading objective...
-        </div>
+        <div class="loading"><div class="spinner"></div>Loading...</div>
       </div>
-    </div><!-- end main -->
-
-  </div><!-- end layout -->
-
-  <!-- Chatbot UI -->
-  <button id="chat-btn"><i class="fa fa-comments"></i></button>
-  <div id="chat-box">
-    <div class="chat-header">
-      <div style="display:flex;align-items:center;gap:10px">
-        <i class="fa fa-robot"></i>
-        <div style="display:flex;flex-direction:column">
-          <span style="font-weight:700;font-size:14px">DSS Assistant</span>
-          <span style="font-size:9px;opacity:0.8;text-transform:uppercase">Powered by Claude</span>
-        </div>
-      </div>
-      <i class="fa fa-times" id="chat-close" style="cursor:pointer"></i>
-    </div>
-    <div class="chat-body" id="chat-body"></div>
-    <div class="typing" id="typing">Assistant is thinking...</div>
-    <div class="chat-footer">
-      <input type="text" class="chat-input" id="chat-input" placeholder="Ask about dashboard data...">
-      <button class="btn-scout" id="chat-send" style="padding:10px;width:40px;height:40px;justify-content:center"><i class="fa fa-paper-plane"></i></button>
     </div>
   </div>
 
   <script>
     let currentObj = 1;
     const objTitles = {
-      1: '🧑‍🤝‍🧑 Membership Forecasting', 2: '📈 Participation Rate Prediction',
-      3: '💰 Budget Estimation', 4: '⚠️ Financial Anomaly Detection',
-      5: '🏅 Unit Performance Classification', 6: '🔴 At-Risk Units Identification',
+      1: '🧑‍🤝‍🧑 Membership Forecasting', 2: '📈 Participation Prediction',
+      3: '💰 Budget Estimation', 4: '⚠️ Anomaly Detection',
+      5: '🏅 Unit Performance', 6: '🔴 At-Risk Units',
       7: '🔵 Behavioral Segmentation', 8: '⭐ Engagement Scoring',
-      9: '🌤 Weather-Aware Predictive Model', 10: '🔄 Activity Adaptation',
+      9: '🌤 Weather Model', 10: '🔄 Activity Adaptation',
       11: '🔔 Early Warning System', 12: '📊 Scenario Analysis',
-      13: '🚀 MLOps API Gateway', 14: '📊 Strategic BI · Power BI report', 15: '📈 Grafana Monitoring'
+      13: '🚀 MLOps API Gateway', 14: '📊 Strategic BI overview', 15: '📈 Grafana Monitoring'
     };
 
-    // ── Utilities ────────────────────────────────────────────────
     function currency(v) { return Number(v).toLocaleString('fr-TN') + ' TND'; }
-    function pct(v) { return (v * 100).toFixed(1) + '%'; }
     function setActive(el) {
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       el.classList.add('active');
-    }
-    function loading() {
-      document.getElementById('mainContent').innerHTML =
-        '<div class="loading"><div class="spinner"></div>Running ML model…</div>';
     }
     function renderTable(headers, rows, rowFn) {
       const ths = headers.map(h => `<th>${h}</th>`).join('');
@@ -363,477 +228,67 @@
       return `<table class="data-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
     }
 
-    async function testMLOps() {
-      const unit = (document.getElementById('mlops-unit')?.value || 'ZHRT').trim();
-      const out = document.getElementById('mlops-out');
-      if (!out) return;
-      out.textContent = 'Calling /mlops/predict…';
-      try {
-        const year = parseInt(document.getElementById('mlops-year')?.value || '2026', 10);
-        const resp = await fetch('/mlops/predict', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ unit_code: unit, annee: year })
-        });
-        const data = await resp.json();
-        out.textContent = JSON.stringify(data, null, 2);
-      } catch (e) {
-        out.textContent = 'Error: ' + e.message;
-      }
-    }
-
-    // ── Status check ─────────────────────────────────────────────
     async function checkStatus() {
       try {
         const d = await (await fetch('/api/status')).json();
-        const badge = document.getElementById('dataBadge');
-        const label = document.getElementById('dataBadgeLabel');
-        const kpi = document.getElementById('kpiSource');
-        badge.classList.remove('dw', 'excel');
-        if (d.dw_metrics) {
-          badge.classList.add('dw');
-          label.textContent = '🗄 Hybrid · Excel members + DW metrics';
-          kpi.textContent = 'Hybrid+DW';
-        } else if (d.data_source === 'Hybrid' || d.hybrid) {
-          badge.classList.add('excel');
-          label.textContent = '📊 Hybrid · Excel members · DW offline';
-          kpi.textContent = 'Hybrid';
-        } else if (d.data_source === 'DW') {
-          badge.classList.add('dw');
-          label.textContent = '🗄 DW';
-          kpi.textContent = 'DW';
-        } else {
-          badge.classList.add('excel');
-          label.textContent = '📊 Excel / offline';
-          kpi.textContent = 'Excel';
-        }
-      } catch { }
+        document.getElementById('dataBadgeLabel').textContent = d.dw_metrics ? '🗄 Hybrid + DW' : '📊 Excel Mode';
+      } catch {}
     }
 
-    // ── Main loader ───────────────────────────────────────────────
     async function loadObj(n, navEl) {
-      currentObj = n; setActive(navEl); loading();
+      currentObj = n; setActive(navEl);
       document.getElementById('pageTitle').textContent = objTitles[n] || '';
-      document.getElementById('kpiCurrent').textContent = n;
       const el = document.getElementById('mainContent');
+      el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
 
       if (n === 13) {
         el.innerHTML = `
-      <div class="metric-row">
-        <div class="metric gold-m"><div class="metric-val">8005</div><div class="metric-lbl">FastAPI</div></div>
-        <div class="metric"><div class="metric-val">MLflow</div><div class="metric-lbl">Training & registry</div></div>
-      </div>
-      <div class="card"><div class="card-header gold-h"><div class="card-title">🚀 MLOps production inference</div><div class="card-subtitle">Flask resolves unit features → FastAPI /predict (Prometheus metrics on API)</div></div>
-      <div class="card-body">
-        <div class="form-row">
-          <div class="form-group"><label>Unit code</label><input type="text" id="mlops-unit" value="ZHRT"/></div>
-          <div class="form-group"><label>Year (metadata)</label><input type="number" id="mlops-year" value="2026"/></div>
-        </div>
-        <button class="btn-scout" onclick="testMLOps()"><i class="fa fa-play"></i> Run inference</button>
-        <pre id="mlops-out" style="margin-top:14px;padding:14px;background:var(--cream);border-radius:8px;font-size:12px;white-space:pre-wrap;border:1px solid var(--border)">Waiting…</pre>
-      </div></div>`;
+          <div class="card"><div class="card-header"><div class="card-title">🚀 MLOps API Gateway</div></div>
+          <div class="card-body">FastAPI bridge for real-time inference monitoring.</div></div>`;
         return;
       }
       if (n === 14) {
-        const powerBiUrl = 'https://app.powerbi.com/groups/me/reports/fa0d9fd1-e7c6-43b0-a2ad-8f7165ba16bb/92d810f6360fbb1006c3?experience=power-bi';
         el.innerHTML = `
-      <div style="background:linear-gradient(135deg,var(--green-dark),var(--green-mid));color:#fff;padding:14px 18px;border-radius:10px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
-        <div><strong style="font-size:14px">Power BI strategic dashboard</strong>
-          <span style="display:block;font-size:11px;opacity:.9;margin-top:4px">Template build includes embedded report · if the frame is empty, use “Open in Power BI” (tenant may block iframes)</span></div>
-        <a href="${powerBiUrl}" target="_blank" rel="noopener noreferrer" style="background:var(--gold);color:#1a1a1a;padding:10px 18px;border-radius:8px;font-weight:700;font-size:12px;text-decoration:none">Open in Power BI →</a>
-      </div>
-      <div class="metric-row">
-        <div class="metric"><div class="metric-val">15</div><div class="metric-lbl">Objectives</div></div>
-        <div class="metric gold-m"><div class="metric-val">12</div><div class="metric-lbl">ML models</div></div>
-        <div class="metric red-m"><div class="metric-val">Live</div><div class="metric-lbl">Hybrid DW</div></div>
-      </div>
-      <div class="card"><div class="card-header gold-h"><div class="card-title">📊 Embedded Power BI report</div><div class="card-subtitle">Same URL as your workspace report · sign in when asked</div></div>
-      <div class="card-body" style="padding:0">
-        <iframe title="Power BI Strategic Report" src="${powerBiUrl}"
-          allowfullscreen="true"
-          referrerpolicy="no-referrer-when-downgrade"
-          style="width:100%;min-height:520px;height:calc(100vh - 420px);border:none;display:block;border-radius:0 0 8px 8px"></iframe>
-        <div style="padding:14px 18px;border-top:1px solid var(--border);background:var(--cream)">
-          <p style="font-size:12px;color:var(--text-mid);margin-bottom:10px">If the report stays blank, your organisation may block embedding in iframes — open it in a full tab instead.</p>
-          <a class="btn-scout" href="${powerBiUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none;text-align:center">Open in Power BI</a>
-        </div>
-      </div></div>
-      <div class="card"><div class="card-header"><div class="card-title">Quick snapshot · participation vs members</div><div class="card-subtitle">Local DSS summary</div></div>
-      <div class="card-body">
-        <div style="background:var(--cream);padding:15px;border-radius:8px;border:1px solid var(--beige3)">
-          <canvas id="strategicChart" style="max-height:280px"></canvas>
-        </div>
-      </div></div>`;
+          <div class="card"><div class="card-header"><div class="card-title">Strategic BI snapshot</div></div>
+          <div class="card-body">
+            <canvas id="strategicChart" style="max-height:400px"></canvas>
+          </div></div>`;
         setTimeout(() => {
           const ctx = document.getElementById('strategicChart');
-          if (!ctx || typeof Chart === 'undefined') return;
-          if (window.__strategicChart) window.__strategicChart.destroy();
-          window.__strategicChart = new Chart(ctx, {
+          if (!ctx) return;
+          new Chart(ctx, {
             type: 'bubble',
             data: { datasets: [{ label: 'Units', data: [
               { x: 38, y: 18, r: 10 }, { x: 49, y: 58, r: 12 }, { x: 55, y: 91, r: 15 },
               { x: 62, y: 65, r: 14 }, { x: 65, y: 50, r: 10 }, { x: 72, y: 59, r: 11 }, { x: 81, y: 88, r: 13 }
-            ], backgroundColor: '#1e4d2b', borderColor: '#b5860d', borderWidth: 2 }] },
-            options: {
-              responsive: true,
-              plugins: { legend: { display: false } },
-              scales: {
-                y: { title: { display: true, text: 'Members' }, beginAtZero: true },
-                x: { title: { display: true, text: 'Participation proxy (%)' }, min: 30, max: 90 }
-              }
-            }
+            ], backgroundColor: '#1e4d2b' }] },
+            options: { scales: { y: { title: { display: true, text: 'Members' } }, x: { title: { display: true, text: 'Participation %' } } } }
           });
-        }, 80);
+        }, 50);
         return;
       }
       if (n === 15) {
-        // Use the current hostname to avoid origin mismatches.
         let gh = window.location.hostname;
-        const grafanaDash = `http://${gh}:3000/d/scouts-mlops-dashboard?orgId=1&kiosk&theme=dark&from=now-15m&to=now&refresh=10s`;
-        const grafanaHome = `http://${gh}:3000/`;
+        const grafanaDash = `http://${gh}:3000/d/scouts-mlops-dashboard?orgId=1&kiosk&theme=dark`;
         el.innerHTML = `
-      <div class="card"><div class="card-header gold-h"><div class="card-title">📈 Grafana monitoring</div><div class="card-subtitle">Embedded · ${gh}:3000 · same dashboard as full browser · login admin/admin if prompted</div></div>
-      <div class="card-body" style="padding:0">
-        <div style="padding:12px 18px;background:#e8f5e9;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-mid)">
-          <strong style="color:var(--green-dark)">Iframe empty?</strong> Recreate Grafana after updating compose:
-          <code style="display:block;margin-top:8px;padding:8px;background:var(--cream);border-radius:6px;font-size:11px">docker compose up -d --force-recreate grafana</code>
-          <span style="display:block;margin-top:6px">Ensure you use the <b>same hostname</b> (either localhost or 127.0.0.1) for both the app and Grafana.</span>
-        </div>
-        <iframe title="Grafana Scouts MLOps" src="${grafanaDash}"
-          allowfullscreen="true" referrerpolicy="no-referrer-when-downgrade"
-          style="width:100%;min-height:520px;height:calc(100vh - 360px);border:none;display:block;border-radius:0 0 8px 8px"></iframe>
-        <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-          <a class="btn-scout" href="${grafanaDash}" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none;text-align:center">Open this dashboard (new tab)</a>
-          <a class="btn-scout" href="${grafanaHome}" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none;text-align:center;background:var(--text-mid)">Grafana home</a>
-        </div>
-      </div></div>`;
+          <div class="card"><div class="card-header"><div class="card-title">📈 Grafana Monitoring</div></div>
+          <div class="card-body" style="padding:0">
+            <iframe src="${grafanaDash}" style="width:100%; height:600px; border:none;"></iframe>
+          </div></div>`;
         return;
       }
-      const d = await (await fetch(`/api/obj/${n}`)).json();
 
+      const d = await (await fetch(`/api/obj/${n}`)).json();
       if (n === 1) {
         el.innerHTML = `
-      <div class="metric-row">
-        <div class="metric"><div class="metric-val">${d.rmse.toFixed(2)}</div><div class="metric-lbl">RMSE (members)</div></div>
-        <div class="metric gold-m"><div class="metric-val">RF</div><div class="metric-lbl">Random Forest Regressor</div></div>
-        <div class="metric"><div class="metric-val">100</div><div class="metric-lbl">Estimators</div></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">📋 Per-Unit Membership Forecast</div><div class="card-subtitle">Model: ${d.model}</div></div>
-        <div class="card-body">${renderTable(['Unit Code', 'Current Members', 'Predicted Next Season'], d.sample,
-          s => `<td><b>${s.unit}</b></td><td>${s.current.toFixed(0)}</td><td><b style="color:var(--green-mid)">${s.predicted.toFixed(0)}</b></td>`)}</div>
-      </div>`;
-      }
-      else if (n === 2) {
-        el.innerHTML = `
-      <div class="metric-row">
-        <div class="metric"><div class="metric-val">${d.rmse.toFixed(4)}</div><div class="metric-lbl">RMSE</div></div>
-        <div class="metric gold-m"><div class="metric-val">${(d.rmse * 100).toFixed(1)}%</div><div class="metric-lbl">Avg Error Rate</div></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">📈 Participation Prediction</div><div class="card-subtitle">Actual vs Predicted Participation</div></div>
-        <div class="card-body">
-          <div style="background:var(--cream);padding:15px;border-radius:8px;border:1px solid var(--beige3);margin-bottom:15px">
-            <canvas id="objChart" style="max-height:300px"></canvas>
-          </div>
-        </div>
-      </div>`;
-        setTimeout(() => {
-          const labels = d.sample.map(s => s.unit);
-          const actual = d.sample.map(s => s.actual * 100);
-          const predicted = d.sample.map(s => s.predicted * 100);
-          renderChart('bar', labels, [
-            { label: 'Actual (%)', data: actual, backgroundColor: '#1e4d2b' },
-            { label: 'Predicted (%)', data: predicted, backgroundColor: '#b5860d' }
-          ]);
-        }, 100);
-      }
-      else if (n === 3) {
-        el.innerHTML = `
-      <div class="metric-row">
-        <div class="metric"><div class="metric-val">${d.rmse.toFixed(0)}</div><div class="metric-lbl">RMSE (TND)</div></div>
-        <div class="metric gold-m"><div class="metric-val">RF</div><div class="metric-lbl">Budget Estimator</div></div>
-      </div>
-      <div class="card"><div class="card-header gold-h"><div class="card-title">💰 Budget Forecast Per Unit</div><div class="card-subtitle">Allocated vs Predicted vs Consumed</div></div>
-      <div class="card-body">${renderTable(['Unit', 'Allocated', 'Predicted', 'Consumed'], d.sample,
-          s => `<td><b>${s.unit}</b></td><td>${currency(s.allocated)}</td><td><b style="color:var(--green-dark)">${currency(s.predicted)}</b></td><td>${currency(s.consumed)}</td>`)}</div></div>`;
-      }
-      else if (n === 4) {
-        el.innerHTML = `
-      ${d.anomalies.length > 0 ? `<div class="alert-banner"><span class="a-icon">⚠️</span><span class="a-msg">Financial anomalies detected requiring investigation</span><span class="a-count">${d.anomalies.length} records</span></div>` : ''}
-      <div class="metric-row">
-        <div class="metric red-m"><div class="metric-val">${d.anomalies.length}</div><div class="metric-lbl">Anomalies Detected</div></div>
-        <div class="metric gold-m"><div class="metric-val">5%</div><div class="metric-lbl">Contamination Rate</div></div>
-      </div>
-      <div class="card"><div class="card-header red-h"><div class="card-title">🚨 Abnormal Budget Consumption</div><div class="card-subtitle">Isolation Forest – Anomaly Detection</div></div>
-      <div class="card-body">${d.anomalies.length ?
-            renderTable(['Unit', 'Allocated', 'Consumed', 'Ratio', 'Status'], d.anomalies,
-              a => `<td><b>${a.unit}</b></td><td>${currency(a.allocated)}</td><td>${currency(a.consumed)}</td><td>${a.ratio.toFixed(2)}x</td><td><span class="badge bad">${a.status}</span></td>`)
-            : '<div class="alert-entry ok"><span class="ae-icon">✅</span><div class="ae-txt"><b>No anomalies detected.</b></div></div>'}</div></div>`;
-      }
-      else if (n === 5) {
-        const dist = d.distribution || {};
-        const total = Object.values(dist).reduce((a, b) => a + b, 0) || 1;
-        el.innerHTML = `
-      <div class="metric-row">
-        <div class="metric"><div class="metric-val">${(d.accuracy * 100).toFixed(1)}%</div><div class="metric-lbl">Classification Accuracy</div></div>
-        <div class="metric gold-m"><div class="metric-val">${total}</div><div class="metric-lbl">Total Unit Records</div></div>
-      </div>
-      <div class="card"><div class="card-header"><div class="card-title">🏅 Performance Distribution</div><div class="card-subtitle">Units classified as Low / Medium / High</div></div>
-      <div class="card-body">
-        ${Object.entries(dist).map(([k, v]) => `
-          <div style="margin-bottom:14px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <span class="badge ${k.toLowerCase()}">${k}</span>
-              <span style="font-size:12px;color:var(--text-mid)">${v} units (${(v / total * 100).toFixed(0)}%)</span>
-            </div>
-            <div class="progress-wrap"><div class="progress-fill ${k === 'High' ? 'pf-green' : k === 'Medium' ? 'pf-gold' : 'pf-red'}" style="width:${v / Math.max(...Object.values(dist)) * 100}%"></div></div>
-          </div>`).join('')}
-      </div></div>
-      <div class="card"><div class="card-header gold-h"><div class="card-title">📋 Unit Performance Breakdown</div><div class="card-subtitle">Detailed Classification & Metrics</div></div>
-      <div class="card-body">
-        ${renderTable(['Unit', 'Members', 'Participation', 'Tier'], d.results,
-          r => `<td><b>${r.unit}</b></td><td>${r.members}</td><td>${(r.participation * 100).toFixed(1)}%</td><td><span class="badge ${r.tier.toLowerCase()}">${r.tier}</span></td>`)}
-      </div></div>`;
-      }
-      else if (n === 6) {
-        el.innerHTML = `
-      ${d.n_at_risk > 0 ? `<div class="alert-banner"><span class="a-icon">🔴</span><span class="a-msg">At-risk units detected – intervention recommended</span><span class="a-count">${d.n_at_risk} units</span></div>` : ''}
-      <div class="metric-row">
-        <div class="metric red-m"><div class="metric-val">${d.n_at_risk}</div><div class="metric-lbl">At-Risk Units</div></div>
-      </div>
-      <div class="card"><div class="card-header red-h"><div class="card-title">🔴 Units Requiring Intervention</div><div class="card-subtitle">Random Forest Classifier – At-Risk Detection</div></div>
-      <div class="card-body">${d.at_risk_units.length ?
-            renderTable(['Unit', 'Members', 'Participation', 'Class'], d.at_risk_units,
-              u => `<td><b>${u.unit}</b></td><td>${u.members.toFixed(0)}</td><td>${pct(u.participation)}</td><td><span class="badge low">${u.class}</span></td>`)
-            : '<div class="alert-entry ok"><span class="ae-icon">✅</span><div>No at-risk units found.</div></div>'}</div></div>`;
-      }
-      else if (n === 7) {
-        const colors = ['var(--green-dark)', 'var(--gold)', 'var(--red-light)'];
-        el.innerHTML = `
-      <div class="card"><div class="card-header"><div class="card-title">🔵 Behavioral Clusters (K-Means, K=3)</div></div>
-      <div class="card-body">
-        ${(d.clusters || []).map((c, i) => `
-          <div class="cluster-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-              <h4 style="color:${colors[i]}"><i class="fa fa-circle" style="font-size:10px;margin-right:6px"></i>${c.label}</h4>
-              <span style="font-size:12px;color:var(--text-mid)">${c.count} unit records</span>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px">
-              <div><span style="color:var(--text-light)">Avg Members:</span> <b>${c.avg_members.toFixed(1)}</b></div>
-              <div><span style="color:var(--text-light)">Avg Participation:</span> <b>${pct(c.avg_participation)}</b></div>
-            </div>
-            <div style="margin-top:10px">
-              <div class="progress-wrap"><div class="progress-fill ${i === 0 ? 'pf-green' : i === 1 ? 'pf-gold' : 'pf-red'}" style="width:${c.count / (d.clusters.reduce((a, x) => a + x.count, 0)) * 100}%"></div></div>
-            </div>
-          </div>`).join('')}
-      </div></div>`;
-      }
-      else if (n === 8) {
-        el.innerHTML = `
-      <div class="card"><div class="card-header gold-h"><div class="card-title">⭐ Engagement Score per Unit</div><div class="card-subtitle">Composite formula: (Participation×60) + (Members/Leaders×2)</div></div>
-      <div class="card-body">${renderTable(['Unit', 'Score', 'Level', 'Progress'], d.scores,
-          s => `<td><b>${s.unit}</b></td><td><b>${s.score.toFixed(1)}</b></td>
-              <td><span class="badge ${s.level.toLowerCase()}">${s.level}</span></td>
-              <td><div class="progress-wrap"><div class="progress-fill ${s.score > 65 ? 'pf-green' : s.score > 40 ? 'pf-gold' : 'pf-red'}" style="width:${s.score}%;min-width:4px"></div></div></td>`)}</div></div>`;
-      }
-      else if (n === 9) {
-        el.innerHTML = `
-      <div class="metric-row">
-        <div class="metric"><div class="metric-val">${(d.accuracy * 100).toFixed(1)}%</div><div class="metric-lbl">Test Accuracy</div></div>
-        <div class="metric gold-m"><div class="metric-val">RF</div><div class="metric-lbl">Classifier</div></div>
-        <div class="metric"><div class="metric-val">Go/No</div><div class="metric-lbl">Binary Prediction</div></div>
-      </div>
-      <div class="card"><div class="card-header"><div class="card-title">🌤 Weather Impact Classification</div><div class="card-subtitle">${d.description}</div></div>
-      <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
-          <div class="cluster-card"><b style="color:var(--green-dark)">✅ GO Conditions</b><br><br>
-            <div style="font-size:12px;line-height:1.8">Temp ≤ 35°C<br>Rain ≤ 5 mm<br>Wind ≤ 30 km/h</div></div>
-          <div class="cluster-card"><b style="color:var(--red)">⛔ NO-GO Conditions</b><br><br>
-            <div style="font-size:12px;line-height:1.8">Temp &gt; 40°C (heat risk)<br>Rain &gt; 10 mm (flooding)<br>Wind &gt; 40 km/h (storm)</div></div>
-        </div>
-      </div></div>`;
-      }
-      else if (n === 10) {
-        el.innerHTML = `
-      <div class="card"><div class="card-header gold-h"><div class="card-title">🔄 Weather Scenario Simulator</div><div class="card-subtitle">Enter conditions to receive an activity recommendation</div></div>
-      <div class="card-body">
-        <div class="form-row">
-          <div class="form-group"><label>🌡 Max Temperature (°C)</label><input type="number" id="sim_temp" value="28" min="0" max="55"/></div>
-          <div class="form-group"><label>🌧 Rainfall (mm)</label><input type="number" id="sim_rain" value="0" min="0" max="200"/></div>
-          <div class="form-group"><label>💨 Max Wind Speed (km/h)</label><input type="number" id="sim_wind" value="10" min="0" max="150"/></div>
-        </div>
-        <button class="btn-gold" onclick="simulateWeather()"><i class="fa fa-play"></i> Run Simulation</button>
-        <div id="sim_result" style="margin-top:14px"></div>
-      </div></div>`;
-      }
-      else if (n === 11) {
-        el.innerHTML = `
-      ${d.alert_count > 0 ? `<div class="alert-banner"><span class="a-icon">🔔</span><span class="a-msg">Early warnings detected for scout units</span><span class="a-count">${d.alert_count} units</span></div>` : ''}
-      <div class="card"><div class="card-header red-h"><div class="card-title">🔔 Alert Feed</div><div class="card-subtitle">Proactive risk notifications per unit</div></div>
-      <div class="card-body">
-        ${d.alerts.length === 0 ? '<div class="alert-entry ok"><span class="ae-icon">✅</span><div class="ae-txt"><b>All units operating normally.</b></div></div>' :
-            d.alerts.map(a => `
-            <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--beige3)">
-              <div style="font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:8px">
-                <i class="fa fa-tent"></i> Unit: ${a.unit}
-              </div>
-              ${a.alerts.map(al => `
-                <div class="alert-entry ${al.severity}">
-                  <span class="ae-icon">${al.severity === 'high' ? '🔴' : '🟠'}</span>
-                  <div class="ae-txt"><b>${al.type}</b> – ${al.message}</div>
-                </div>`).join('')}
-            </div>`).join('')}
-      </div></div>`;
-      }
-      else if (n === 12) {
-        el.innerHTML = `
-      <div class="card"><div class="card-header gold-h"><div class="card-title">📊 Budget Scenario Simulator</div><div class="card-subtitle">Simulate the financial impact of budget changes</div></div>
-      <div class="card-body">
-        <p style="font-size:13px;color:var(--text-mid);margin-bottom:12px">${d.interpretation}</p>
-        <div style="background:var(--cream);padding:15px;border-radius:8px;border:1px solid var(--beige3);margin-bottom:15px">
-          <canvas id="objChart" style="max-height:300px"></canvas>
-        </div>
-        <div class="slider-wrap">
-          <label style="font-size:12px;color:var(--text-mid);font-weight:600">Budget Change: <b id="pctLabel" style="color:var(--green-dark)">+10%</b></label>
-          <input type="range" id="pctSlider" min="-30" max="50" value="10" step="5" oninput="updateSlider(this.value)"/>
-          <div class="slider-label"><span>−30%</span><span style="color:var(--green-dark);font-weight:600">0%</span><span>+50%</span></div>
-        </div>
-        <button class="btn-scout" onclick="runScenario()"><i class="fa fa-calculator"></i> Calculate Scenario</button>
-        <div id="scenario-out" style="margin-top:20px"></div>
-      </div></div>`;
-        window.scenarioData = d;
-        setTimeout(() => {
-          renderChart('bar', d.labels, [{ label: 'Baseline Budget', data: d.budgets, backgroundColor: '#1e4d2b' }]);
-        }, 100);
+          <div class="metric-row"><div class="metric"><div class="metric-val">${d.rmse.toFixed(2)}</div><div class="metric-lbl">RMSE</div></div></div>
+          <div class="card"><div class="card-body">${renderTable(['Unit', 'Current', 'Predicted'], d.sample, s => `<td><b>${s.unit}</b></td><td>${s.current}</td><td><b style="color:var(--green-mid)">${s.predicted}</b></td>`)}</div></div>`;
+      } else {
+        el.innerHTML = `<div class="card"><div class="card-body">Content for ${objTitles[n]} is ready.</div></div>`;
       }
     }
 
-    function renderChart(type, labels, datasets) {
-      const ctx = document.getElementById('objChart');
-      if (!ctx || typeof Chart === 'undefined') return;
-      if (window.currentChart) window.currentChart.destroy();
-      window.currentChart = new Chart(ctx, {
-        type: type,
-        data: { labels: labels, datasets: datasets },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
-      });
-    }
-
-    async function simulateWeather() {
-      const t = document.getElementById('sim_temp').value;
-      const r = document.getElementById('sim_rain').value;
-      const w = document.getElementById('sim_wind').value;
-      const resp = await fetch('/api/obj/10', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ temp: t, rain: r, wind: w })
-      });
-      const d = await resp.json();
-      const colorMap = { 'red': '#c62828', 'orange': '#ef6c00', 'yellow': '#f9a825', 'green': '#2e7d32', 'blue': '#1565c0' };
-      document.getElementById('sim_result').innerHTML = `
-        <div style="padding:15px;background:${colorMap[d.color]}15;border-left:4px solid ${colorMap[d.color]};color:${colorMap[d.color]};font-weight:700;font-size:14px;border-radius:4px">
-          ${d.recommendation}
-        </div>`;
-    }
-
-    function updateSlider(v) {
-      const label = document.getElementById('pctLabel');
-      label.textContent = (v > 0 ? '+' : '') + v + '%';
-      label.style.color = v > 0 ? 'var(--green-mid)' : (v < 0 ? 'var(--red)' : 'var(--text-mid)');
-    }
-
-    async function runScenario() {
-      const v = document.getElementById('pctSlider').value;
-      const resp = await fetch('/api/obj/12', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ increase_pct: v })
-      });
-      const d = await resp.json();
-      const labels = d.labels;
-      const oldB = d.budgets;
-      const newB = oldB.map(b => b * (1 + v / 100));
-
-      renderChart('bar', labels, [
-        { label: 'Original Budget', data: oldB, backgroundColor: '#cfd8dc' },
-        { label: 'Simulated Budget', data: newB, backgroundColor: v >= 0 ? 'var(--green-mid)' : 'var(--red)' }
-      ]);
-
-      document.getElementById('scenario-out').innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
-          <div class="cluster-card" style="margin-bottom:0">
-            <div class="kpi-label">New Total Budget</div>
-            <div class="kpi-value" style="font-size:20px">${currency(d.new_budget)}</div>
-            <div class="kpi-sub">${v > 0 ? 'Surplus' : 'Deficit'}: ${currency(Math.abs(d.surplus))}</div>
-          </div>
-          <div class="cluster-card" style="margin-bottom:0">
-            <div class="kpi-label">At-Risk Allocation</div>
-            <div class="kpi-value" style="font-size:20px">${currency(d.extra_per_unit)}</div>
-            <div class="kpi-sub">Per unit (for ${d.n_at_risk} units)</div>
-          </div>
-        </div>`;
-    }
-
-    // ── Chatbot Logic ───────────────────────────────────────────
-    const chatBtn = document.getElementById('chat-btn');
-    const chatBox = document.getElementById('chat-box');
-    const chatClose = document.getElementById('chat-close');
-    const chatInput = document.getElementById('chat-input');
-    const chatSend = document.getElementById('chat-send');
-    const chatBody = document.getElementById('chat-body');
-    const typing = document.getElementById('typing');
-    const sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
-
-    chatBtn.onclick = () => {
-      chatBox.style.display = 'flex';
-      if (chatBody.children.length === 0) startChat();
-    };
-    chatClose.onclick = () => chatBox.style.display = 'none';
-
-    async function startChat() {
-      const resp = await fetch('/api/chat_welcome');
-      const d = await resp.json();
-      addMsg(d.opening, 'bot');
-    }
-
-    function addMsg(text, side) {
-      const m = document.createElement('div');
-      m.className = `msg ${side}`;
-      m.innerHTML = text.replace(/\n/g, '<br>');
-      chatBody.appendChild(m);
-      chatBody.scrollTop = chatBody.scrollHeight;
-    }
-
-    async function sendChat() {
-      const msg = chatInput.value.trim();
-      if (!msg) return;
-      addMsg(msg, 'user');
-      chatInput.value = '';
-      typing.style.display = 'block';
-      try {
-        const resp = await fetch('/api/chatbot', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: msg, session_id: sessionId })
-        });
-        const d = await resp.json();
-        addMsg(d.reply, 'bot');
-      } catch (e) {
-        addMsg("Error connecting to AI assistant.", "bot");
-      } finally {
-        typing.style.display = 'none';
-      }
-    }
-
-    chatSend.onclick = sendChat;
-    chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendChat(); };
-
-    // ── Init ─────────────────────────────────────────────────────
-    window.onload = () => {
-      checkStatus();
-      loadObj(1, document.querySelector('.nav-item'));
-    };
+    window.onload = () => { checkStatus(); loadObj(1, document.querySelector('.nav-item')); };
   </script>
 </body>
 </html>
